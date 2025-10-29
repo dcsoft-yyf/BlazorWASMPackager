@@ -1,0 +1,962 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blazor WASM 程序打包器</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .intro {
+            margin-bottom: 20px;
+            line-height: 1.6;
+            width: 800px;
+        }
+
+        .output-filename-container {
+            width: 800px;
+            margin: 10px 0;
+        }
+
+            .output-filename-container label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 500;
+            }
+
+        #outputFileNameInput {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .merge-files-container {
+            width: 800px;
+            margin: 15px 0;
+        }
+
+            .merge-files-container label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+            }
+
+        #mergeFilesInput {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        .minify-option {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        #minifyMergeJs {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+        #removeImportMergeJs {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .merge-files-hint, .filename-hint {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        #progressContainer {
+            width: 800px;
+            height: 24px;
+            background-color: #f0f0f0;
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #ddd;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+
+        #progressText {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 0.9em;
+            color: #000;
+            pointer-events: none;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        #debugOutput {
+            width: 800px;
+            height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+
+        .report {
+            width: 800px;
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9fa;
+        }
+
+            .report h3 {
+                margin-top: 0;
+                color: #333;
+            }
+
+            .report p {
+                margin: 5px 0;
+            }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+            .download-link:hover {
+                background-color: #0056b3;
+            }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+            button:disabled {
+                background-color: #6c757d;
+                cursor: not-allowed;
+            }
+
+        .note {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            width: 800px;
+        }
+
+        .copyright {
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .size-info {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Blazor WASM 程序打包器</h1>
+    <div class="intro">
+        <p>发布时间 2025年10月29日 。网站:<a href="https://github.com/dcsoft-yyf/BlazorWASMPackager">https://github.com/dcsoft-yyf/BlazorWASMPackager</a></p>
+        <p>此工具用于打包 Blazor WebAssembly 应用的核心资源文件。请将本HTML文件放置在Blazor Wassembly程序发布后的根目录下（_framework的父目录中），点击下方按钮后，程序将：</p>
+        <ol>
+            <li>解析当前应用的 <code>_framework/blazor.boot.json</code> 配置文件（并包含到打包结果中）</li>
+            <li>强制打包 boot.json 中列出的所有资源文件（包括JS文件）</li>
+            <li>下载这些资源文件并进行 GZIP 最大压缩</li>
+            <li>将用户指定的自定义脚本合并为 Merge.js 并一同打包（可选）</li>
+            <li>生成包含所有资源的 JavaScript 文件并提供下载</li>
+        </ol>
+    </div>
+
+    <!-- 输出文件名输入区域 -->
+    <div class="output-filename-container">
+        <label for="outputFileNameInput">最终生成的JS文件名：</label>
+        <input type="text" id="outputFileNameInput"  placeholder="例如：MyApp.published.js">
+        <div class="filename-hint">提示：留空将使用默认文件名（entryAssembly值 + .published.js）。请确保包含.js扩展名。</div>
+    </div>
+
+    <!-- 自定义脚本输入区域 -->
+    <div class="merge-files-container">
+        <label for="mergeFilesInput">需要合并的自定义JS文件（每行一个，相对于_framework目录）：</label>
+        <textarea id="mergeFilesInput" placeholder="例如：
+custom-script-1.js
+scripts/custom-script-2.js"></textarea>
+
+        <div class="minify-option">
+            <input type="checkbox" id="minifyMergeJs">
+            <label for="minifyMergeJs">合并自定义脚本时删除注释和无意义空格（处理模板字符串和正则表达式）</label>
+        </div>
+        <div class="minify-option">
+            <input type="checkbox" id="removeImportMergeJs" checked>
+            <label for="removeImportMergeJs">合并自定义脚本时删除<i>import {name} from "a.js"</i>指令</label>
+        </div>
+
+        <div class="merge-files-hint">提示：输入需要合并的自定义JS文件名，程序将合并为Merge.js并包含到结果中。留空则不生成Merge.js。</div>
+    </div>
+
+    <button id="downloadBtn" onclick="processAndDownload()">打包并下载资源文件</button>
+
+    <div id="progressContainer">
+        <div id="progressBar"></div>
+        <div id="progressText">准备就绪</div>
+    </div>
+
+    <div>
+        <h3>处理日志</h3>
+        <div id="debugOutput"></div>
+    </div>
+
+    <!-- 总结报告区域 -->
+    <div class="report" id="summaryReport" style="display: none;">
+        <h3>打包总结报告</h3>
+        <p>原始文件总大小: <span id="originalTotalSize" class="size-info">-</span></p>
+        <p>生成的JS文件大小 (UTF-8编码): <span id="jsFileSize" class="size-info">-</span></p>
+        <p>压缩比率: <span id="compressionRatio" class="size-info">-</span></p>
+        <a id="manualDownloadLink" href="#" class="download-link">手动下载生成的资源文件</a>
+    </div>
+
+    <div class="note">
+        <strong>注意：</strong>请确保此页面在 Blazor WASM 应用的根目录下运行，以正确访问 <code>_framework</code> 目录中的文件。处理时间取决于资源文件的数量和大小，请耐心等待。
+    </div>
+
+    <div class="copyright">南京都昌信息科技有限公司版权所有</div>
+
+    <script>
+        const debugOutputEl = document.getElementById('debugOutput');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const summaryReport = document.getElementById('summaryReport');
+        const manualDownloadLink = document.getElementById('manualDownloadLink');
+        const mergeFilesInput = document.getElementById('mergeFilesInput');
+        const minifyMergeJs = document.getElementById('minifyMergeJs');
+        const outputFileNameInput = document.getElementById('outputFileNameInput');
+        let blobUrl = null;
+
+        // 格式化字节大小
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function logDebugMessage(message) {
+            debugOutputEl.textContent += message + '\n';
+            debugOutputEl.scrollTop = debugOutputEl.scrollHeight;
+        }
+
+        function clearDebugOutput() {
+            debugOutputEl.textContent = '';
+        }
+
+        function updateProgress(percent, text) {
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = text || `${percent.toFixed(1)}%`;
+        }
+
+        // 重置进度条
+        function resetProgressBar() {
+            updateProgress(0, '准备就绪');
+        }
+
+        /**
+         * 增强版JS代码压缩：保护模板字符串和正则表达式
+         */
+        function minifyJs(code) {
+            // 存储需要保护的内容：模板字符串、正则表达式
+            const protectedSegments = [];
+            let tempCode = code;
+            let segmentIndex = 0;
+
+            // 匹配模板字符串 `...`，支持嵌套的`（通过转义符\`）
+            const templateStringRegex = /`(?:\\`|[^`])*`/g;
+            tempCode = tempCode.replace(templateStringRegex, (match) => {
+                const index = segmentIndex++;
+                protectedSegments.push({ type: 'template', content: match });
+                return `__PROTECTED_${index}__`;
+            });
+
+            // 匹配正则表达式，需要避免在除以运算符/和其他上下文误判
+            // 这个正则表达式会匹配典型的正则表达式字面量
+            const regexLiteralRegex = /(?<![=<>!*/]|\/{2,})\/(?:\\\/|[^/])+\/[gimuy]*/g;
+            tempCode = tempCode.replace(regexLiteralRegex, (match) => {
+                const index = segmentIndex++;
+                protectedSegments.push({ type: 'regex', content: match });
+                return `__PROTECTED_${index}__`;
+            });
+
+            // 匹配单引号和双引号字符串
+            const stringLiteralRegex = /(["'])(\\.|[^\\\1])*\1/g;
+            tempCode = tempCode.replace(stringLiteralRegex, (match) => {
+                const index = segmentIndex++;
+                protectedSegments.push({ type: 'string', content: match });
+                return `__PROTECTED_${index}__`;
+            });
+
+            // 移除单行注释
+            let minified = tempCode.replace(/\/\/.*$/gm, '');
+
+            // 移除多行注释
+            minified = minified.replace(/\/\*[\s\S]*?\*\//g, '');
+
+            // 处理空格和换行
+            minified = minified
+                .replace(/^\s+|\s+$/gm, '')  // 移除行首行尾空格
+                .replace(/\n+/g, '\n')       // 合并多个空行为一个
+                .replace(/^\n/gm, '')        // 移除空行
+                .replace(/\s+/g, ' ');       // 压缩空格
+
+            // 恢复受保护的片段
+            minified = minified.replace(/__PROTECTED_(\d+)__/g, (match, index) => {
+                return protectedSegments[parseInt(index, 10)].content;
+            });
+
+            // 安全处理运算符周围的空格
+            const operators = [
+                ';', '{', '}', '(', ')', ',', '=', '+', '-', '*', '/',
+                '==', '===', '!', '!=', '!==', '&&', '||', '>', '>=', '<', '<='
+            ];
+
+            // 按运算符长度排序，确保较长的运算符先被处理
+            operators.sort((a, b) => b.length - a.length);
+
+            operators.forEach(op => {
+                // 转义特殊字符
+                const escapedOp = op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // 处理运算符周围的空格，但不影响正则表达式和模板字符串
+                minified = minified.replace(new RegExp(`\\s*${escapedOp}\\s*`, 'g'), op);
+            });
+
+            return minified.trim();
+        }
+
+        /**
+         * 使用最大压缩级别进行GZIP压缩
+         */
+        async function gzipCompress(uint8Array) {
+            const cs = new CompressionStream('gzip', { level: 9 });
+            const writer = cs.writable.getWriter();
+            writer.write(uint8Array);
+            writer.close();
+
+            const compressedChunks = [];
+            const reader = cs.readable.getReader();
+            let done, value;
+            while ({ done, value } = await reader.read(), !done) {
+                compressedChunks.push(value);
+            }
+
+            const totalLength = compressedChunks.reduce((acc, chunk) => acc + chunk.length, 0);
+            const compressed = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of compressedChunks) {
+                compressed.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            return compressed;
+        }
+
+        function uint8ArrayToBase64(uint8Array) {
+            const CHUNK_SIZE = 129;
+            let base64 = '';
+            let isFirstChunk = true;
+
+            for (let i = 0; i < uint8Array.length; i += CHUNK_SIZE) {
+                const chunk = uint8Array.subarray(i, i + CHUNK_SIZE);
+
+                let binary = '';
+                for (let j = 0; j < chunk.length; j++) {
+                    binary += String.fromCharCode(chunk[j]);
+                }
+
+                const chunkBase64 = btoa(binary);
+
+                if (!isFirstChunk) {
+                    base64 += '\n';
+                } else {
+                    isFirstChunk = false;
+                }
+
+                base64 += chunkBase64;
+            }
+
+            return base64;
+        }
+
+        function escapeJsKey(key) {
+            if (/[^a-zA-Z0-9_$]/.test(key)) {
+                return `"${key.replace(/"/g, '\\"')}"`;
+            }
+            return key;
+        }
+
+        /**
+         * 处理用户指定的自定义JS文件合并
+         */
+        async function processCustomJsFiles(originalTotalBytes) {
+            // 获取用户输入的文件名，去除空行和前后空格
+            const inputText = mergeFilesInput.value.trim();
+            if (!inputText) {
+                logDebugMessage('未指定自定义JS文件，不生成Merge.js');
+                return { originalTotalBytes, fileEntries: [] };
+            }
+
+            // 解析输入的文件名列表
+            const filenames = inputText.split('\n')
+                .map(line => line.trim())
+                .filter(line => line); // 过滤空行
+
+            if (filenames.length === 0) {
+                logDebugMessage('未指定有效自定义JS文件，不生成Merge.js');
+                return { originalTotalBytes, fileEntries: [] };
+            }
+
+            // 获取是否需要压缩的选项
+            const shouldMinify = minifyMergeJs.checked;
+            logDebugMessage(`处理 ${filenames.length} 个自定义JS文件: ${filenames.join(', ')} ${shouldMinify ? '(将精简代码)' : ''}`);
+
+            // 下载并合并所有指定的JS文件
+            let mergedContent = '';
+            let mergeFileEntries = [];
+            let originalMergedSize = 0;
+
+            for (const filename of filenames) {
+                try {
+                    logDebugMessage(`下载: ${filename}`);
+                    const response = await fetch(`_framework/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`下载失败 (${response.status})`);
+                    }
+
+                    let content = await response.text();
+                    const originalFileSize = new TextEncoder().encode(content).length;
+                    originalTotalBytes += originalFileSize;
+                    originalMergedSize += originalFileSize;
+
+                    // 如果需要压缩，处理单个文件内容
+                    if (shouldMinify) {
+                        const minifiedContent = minifyJs(content);
+                        content = minifiedContent;
+                    }
+
+                    // 添加到合并内容（保留来源注释，除非要压缩）
+                    if (!shouldMinify) {
+                        mergedContent += `// 来自: ${filename}\n`;
+                    }
+                    mergedContent += content;
+                    mergedContent += shouldMinify ? ';' : '\n\n';
+
+                } catch (error) {
+                    logDebugMessage(`处理 ${filename} 出错: ${error.message}，已跳过`);
+                }
+            }
+
+            if (mergedContent.trim() === '') {
+                logDebugMessage('所有自定义文件处理失败，不生成Merge.js');
+                return { originalTotalBytes, fileEntries: [] };
+            }
+
+            // 处理合并后的内容
+            let finalContent = mergedContent;
+
+            // 如果需要压缩且尚未压缩
+            if (shouldMinify) {
+                finalContent = minifyJs(finalContent);
+                logDebugMessage(`自定义脚本已精简，原始大小: ${formatBytes(originalMergedSize)}, 精简后: ${formatBytes(new TextEncoder().encode(finalContent).length)}`);
+            }
+
+            // 压缩合并后的内容
+            const mergedUint8 = new TextEncoder().encode(finalContent);
+            const compressed = await gzipCompress(mergedUint8);
+            logDebugMessage(`Merge.js 压缩完成: ${formatBytes(compressed.length)}`);
+
+            // 转换为Base64
+            const base64Content = uint8ArrayToBase64(compressed);
+
+            // 添加到文件条目
+            mergeFileEntries.push({
+                filename: 'Merge.js',
+                content: base64Content
+            });
+
+            logDebugMessage('Merge.js 已生成并添加到打包列表');
+            return { originalTotalBytes, fileEntries: mergeFileEntries };
+        }
+
+        async function processAndDownload() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.disabled = true;
+            updateProgress(0, '开始处理...');
+            clearDebugOutput();
+            logDebugMessage('开始打包流程');
+
+            // 重置报告和下载链接
+            summaryReport.style.display = 'none';
+            if (blobUrl) {
+                URL.revokeObjectURL(blobUrl);
+                blobUrl = null;
+            }
+
+            // 统计信息
+            let originalTotalBytes = 0;
+            let jsFileBytes = 0;
+            let outputFileName = 'blazor-resources.published.js'; // 默认文件名
+
+            try {
+                if (!window.CompressionStream) {
+                    throw new Error('浏览器不支持GZIP压缩，请使用最新版Chrome、Edge或Firefox');
+                }
+
+                // 1. 处理用户指定的自定义JS文件合并
+                updateProgress(3, '处理自定义文件...');
+                const customJsResult = await processCustomJsFiles(originalTotalBytes);
+                originalTotalBytes = customJsResult.originalTotalBytes;
+                const customFileEntries = customJsResult.fileEntries;
+
+                // 2. 加载并处理 blazor.boot.json
+                logDebugMessage('加载 blazor.boot.json 配置文件');
+                updateProgress(5, '加载配置文件...');
+
+                const bootJsonResponse = await fetch('_framework/blazor.boot.json');
+                if (!bootJsonResponse.ok) {
+                    throw new Error(`无法加载 blazor.boot.json (${bootJsonResponse.statusText})`);
+                }
+
+                // 获取blazor.boot.json的原始内容和大小
+                const bootJsonText = await bootJsonResponse.text();
+                const bootJsonBytes = new TextEncoder().encode(bootJsonText).length;
+                originalTotalBytes += bootJsonBytes;
+                logDebugMessage(`blazor.boot.json 加载成功 (${formatBytes(bootJsonBytes)})`);
+
+                const bootJson = JSON.parse(bootJsonText);
+
+                // 确定输出文件名：用户输入优先
+                const userFileName = outputFileNameInput.value.trim();
+                if (userFileName) {
+                    outputFileName = userFileName;
+                    logDebugMessage(`使用用户指定文件名: ${outputFileName}`);
+                } else if (bootJson.entryAssembly) {
+                    outputFileName = `${bootJson.entryAssembly}.published.js`;
+                    logDebugMessage(`使用默认文件名: ${outputFileName}`);
+                } else if (bootJson.mainAssemblyName) {
+                    outputFileName = `${bootJson.mainAssemblyName}.published.js`;
+                    logDebugMessage(`使用默认文件名: ${outputFileName}`);
+                }
+
+                updateProgress(10, '解析配置文件完成');
+
+                // 3. 收集需要处理的文件列表（boot.json中列出的所有文件，强制打包）
+                const filesToProcess = ["blazor.webassembly.js"];
+                const resourceTypes = ['runtime', 'assembly',
+                    'runtimeAssets', 'pdb', 'jsModuleNative',
+                    'jsModuleRuntime', 'wasmNative',
+                    'icu', 'coreAssembly', 'fingerprinting'];
+                resourceTypes.forEach(type => {
+                    if (bootJson.resources && bootJson.resources[type]) {
+                        const items = bootJson.resources[type];
+                        Object.keys(items).forEach(filename => {
+                            if (filesToProcess.indexOf(filename) < 0) {
+                                filesToProcess.push(filename);
+                            }
+                        });
+                    }
+                });
+                if (bootJson.appsettings) {
+                    for(var item4 of bootJson.appsettings) {
+                        filesToProcess.push(item4);
+                    }
+                }
+
+                logDebugMessage(`发现 ${filesToProcess.length} 个需要打包的资源文件`);
+                updateProgress(15, '准备处理文件...');
+
+                if (filesToProcess.length === 0 && customFileEntries.length === 0) {
+                    throw new Error('未找到任何需要打包的文件');
+                }
+
+                // 4. 处理所有文件（包括blazor.boot.json和自定义合并文件）
+                const fileEntries = [...customFileEntries];
+
+                // 添加blazor.boot.json
+                const bootJsonCompressed = await gzipCompress(new TextEncoder().encode(bootJsonText));
+                const bootJsonBase64 = uint8ArrayToBase64(bootJsonCompressed);
+                fileEntries.push({
+                    filename: 'blazor.boot.json',
+                    content: bootJsonBase64
+                });
+                logDebugMessage('blazor.boot.json 已处理');
+
+                let processedCount = 0;
+                const totalFiles = filesToProcess.length;
+                const progressPerFile = totalFiles > 0 ? 75 / totalFiles : 0;
+                var intRuntimeVersion = 7;
+                for (const filename of filesToProcess) {
+                    try {
+                        updateProgress(15 + (processedCount * progressPerFile),
+                            `处理中 (${processedCount}/${totalFiles}): ${filename}`);
+                        //var url4 = new URL(filename, "_framework").href;
+                        var url5 = new URL("_framework/" + filename, document.baseURI).href;
+                        const fileResponse = await fetch(url5);
+                        if (!fileResponse.ok) {
+                            throw new Error(`下载失败 (${fileResponse.statusText})`);
+                        }
+
+                        const arrayBuffer = await fileResponse.arrayBuffer();
+                        var uint8Array = new Uint8Array(arrayBuffer);
+                        if (filename.startsWith("dotnet.runtime.")
+                            && uint8Array != null
+                            && uint8Array.length > 10000) {
+                            var strText44 = new TextDecoder().decode(uint8Array);
+                            var strHeader44 = strText44.substring(0, 1000);
+                            if (strHeader44.indexOf("e=\"9.") >= 0) {
+                                intRuntimeVersion = 9;
+                            }
+                            else if (strHeader44.indexOf("e=\"8.") >= 0) {
+                                intRuntimeVersion = 8;
+                            }
+                        }
+                        //if (filename == "dotnet.js") {
+                        //    var strText = new TextDecoder().decode(uint8Array);
+                        //    var strFlags = "qe.locateFile=e=>";
+                        //    var index45 = strText.indexOf(strFlags);
+                        //    if (index45 > 0) {
+                        //        var strText2 = strText.replaceAll(strFlags, "qe.locateFile=e=>e,qe.zzzz=e=>");
+                        //        var ssstt = strText == strText2;
+                        //        var index456 = strText2.indexOf(strFlags);
+                        //        var arr45 = new TextEncoder().encode(strText2);
+                        //        uint8Array = arr45;
+                        //    }
+                        //}
+                        const fileSize = uint8Array.length;
+                        originalTotalBytes += fileSize;
+
+                        const compressed = await gzipCompress(uint8Array);
+                        const base64WithNewlines = uint8ArrayToBase64(compressed);
+
+                        fileEntries.push({
+                            filename: filename,
+                            content: base64WithNewlines
+                        });
+
+                        processedCount++;
+                        logDebugMessage(`已处理: ${filename} (${formatBytes(fileSize)})`);
+                    } catch (error) {
+                        logDebugMessage(`处理 ${filename} 出错: ${error.message}，已跳过`);
+                        processedCount++;
+                    }
+                }
+
+                if (fileEntries.length <= (customFileEntries.length > 0 ? 1 : 0)) {
+                    throw new Error('所有资源文件处理失败');
+                }
+
+                // 5. 生成输出文件，第一行添加当前日期时间
+                logDebugMessage(`生成输出文件: ${outputFileName}`);
+                updateProgress(98, '正在生成输出文件...');
+
+                // 获取当前日期时间，格式化为：YYYY-MM-DD HH:MM:SS
+                const now = new Date();
+                const dateTimeStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                // 构建JS内容，第一行为日期时间注释
+                let jsContent = `// Gen at ${dateTimeStr}\n by https://github.com/dcsoft-yyf/BlazorWASMPackager`;
+                jsContent += '\n"use strict";\n window.__DCAllFileContents20251024 = {\n';
+
+                fileEntries.forEach((entry, index) => {
+                    const isLastEntry = index === fileEntries.length - 1;
+                    const key = escapeJsKey(entry.filename);
+                    const escapedContent = entry.content.replace(/`/g, '\\`');
+                    jsContent += `  ${key}: \`${escapedContent}\`${isLastEntry ? '' : ','}\n`;
+                });
+
+                jsContent += '};';
+                jsContent += `
+(async function () {
+    if (window.__DCWriter5Started == true) {
+        // 避免重复调用
+        return;
+    }
+    var allFileContents = window.__DCAllFileContents20251024; window.__DCAllFileContents20251024 = null;
+    window.__DCWriter5Started = true;
+    // 获得资源基础路径
+    var bolDebugMode = false;
+    function ConverToBoolean(strValue, bolDefaultValue) {
+        if (strValue == null || strValue.length == 0) return bolDefaultValue;
+        strValue = strValue.trim().toLowerCase();
+        if (strValue == "true") return true;
+        if (strValue == "false") return false;
+        return bolDefaultValue;
+    };
+    if (document.currentScript != null) {
+        //debugger;
+        bolDebugMode = ConverToBoolean(document.currentScript.getAttribute("debugmode"), false);
+    }
+    function GetFileExt( strFileName ){
+        var index345 = strFileName.lastIndexOf('.');
+        if (index345 > 0) {
+            return strFileName.substring(index345).trim().toLowerCase();
+        }
+        return null;
+    };
+    var jsScript = document.createElement("script");
+    jsScript.setAttribute("language", "javascript");
+    jsScript.src = "_framework/blazor.webassembly.js";
+    var strEnvironment = null;
+    var mapBase64BlobUrl = {};
+    if (window.DecompressionStream && allFileContents != null) {
+        function StartsWith( strText , strHeader ){
+            return strText.length >= strHeader.length
+                && strText.substring( 0 , strHeader.length) == strHeader;
+        };
+        // 启用本地Base64资源
+        /** 将一个Base64字符串转换为字节数组后GZIP解压缩并返回一个内部下载URL地址*/
+        async function Base64ToBlobUrl(strBase64String, strFileName) {
+            try {
+                const binaryStr = atob(strBase64String);
+                const uint8Array = new Uint8Array(binaryStr.length);
+                for (let i = binaryStr.length - 1; i >= 0; i--) {
+                    uint8Array[i] = binaryStr.charCodeAt(i);
+                }
+                //const uint8Array = new TextEncoder().encode(binaryStr);
+                const sourceStream = new Blob([uint8Array]).stream();
+                const decompressedStream = sourceStream.pipeThrough(
+                    new DecompressionStream('gzip')
+                );
+                const blob = await new Response(decompressedStream).blob();
+                var strMimeType = "application/x-msdownload";
+                if (strFileName != null) {
+                    var strExt = GetFileExt( strFileName );
+                    switch (strExt) {
+                        case ".js": strMimeType = "application/javascript"; break;
+                        case ".json": strMimeType = "application/json"; break;
+                        case ".wasm": strMimeType = "application/wasm"; break;
+                        case ".blat": strMimeType = "application/octet-stream"; break;
+                        case ".dat": strMimeType = "application/octet-stream"; break;
+                        case ".dll": strMimeType = "application/x-msdownload"; break;
+                    }
+                }
+                const typedBlob = new Blob([blob], { type: strMimeType });
+                const blobUrl = URL.createObjectURL(typedBlob);
+                return blobUrl;
+            } catch (error) {
+                console.error('转换失败:', error);
+                throw error;
+            }
+        }
+        for (var key in allFileContents) {
+            var strUrl44 = await Base64ToBlobUrl(allFileContents[key], key);
+            if (strUrl44 != null && strUrl44.length > 0) {
+                mapBase64BlobUrl[key] = strUrl44;
+                if (key == "Merge.js") {
+                    strEnvironment = strUrl44;
+                }
+                else if (key == "blazor.webassembly.js") {
+                    jsScript.src = strUrl44;
+                }
+            }
+        }
+    }
+    var myOriginalURL = null;
+    `;
+                if (intRuntimeVersion == 9) {
+                    jsContent += `
+    myOriginalURL = globalThis.URL || window.URL;
+    var newURL = function(strUrl , strBase){
+        this.toString = function () {
+            return this.href;
+        };
+        if(strBase == null || strBase.length == 0 ){
+            this.href = strUrl;
+            return;
+        }
+        if (strUrl.length > 5 && strUrl.substring(0, 5) == "blob:") {
+            this.href = strUrl;
+            return;
+        }
+        if (strUrl == "./blazor.boot.json") {
+            var strUrl4 = mapBase64BlobUrl["blazor.boot.json"];
+            if (strUrl4 != null && strUrl4.length > 0) {
+                this.href = strUrl4;
+                //globalThis.URL = myOriginalURL;
+                return;
+            }
+        }
+        if (strBase.length > 5 && strBase.substring( 0 , 5 ) == "blob:")
+        {
+            var strUrl5 = mapBase64BlobUrl[ strUrl];
+            if (strUrl5 != null && strUrl5.length > 0 )
+            {
+                this.href = strUrl5;
+            }
+            return;
+        }
+        if (GetFileExt( strUrl ) == ".js")
+        {
+            var strUrl2 = mapBase64BlobUrl[strUrl];
+            if (strUrl2 != null && strUrl2.length > 0) {
+                this.href = strUrl2;
+                return;
+            }
+        }
+        return new myOriginalURL( strUrl , strBase);
+    };
+    globalThis.URL = newURL;`;
+                }
+                jsContent += `
+    allFileContents = null;
+    jsScript.setAttribute("autostart", "false");
+    jsScript.onload = function () {
+        Blazor.start({
+            environment: strEnvironment,
+            loadBootResource: function (type, name, defaultUri, integrity) {
+                if (name == 'blazor.boot.json') {
+                    //对微前端框架MicroApp的支持
+                    if (window.__MICRO_APP_WINDOW__) {
+                        __MICRO_APP_WINDOW__.document.defaultView.Blazor = window.Blazor;
+                        __MICRO_APP_WINDOW__.document.defaultView.DotNet = window.DotNet;
+                        if (window.rawWindow) {
+                            window.rawWindow.Blazor = window.Blazor;
+                            window.rawWindow.DotNet = window.DotNet;
+                        }
+                    }
+                }
+                //对微前端框架QianKun的支持
+                if (window.__POWERED_BY_QIANKUN__) {
+                    window.document.defaultView.Blazor = window.Blazor;
+                    window.document.defaultView.DotNet = window.DotNet;
+                }
+                //if (GetFileExt( name ) == ".js") return '_framework/' + name;
+                // 启用本地Base64资源
+                var localUrl = mapBase64BlobUrl[name];
+                if (localUrl != null && localUrl.length > 0) {
+                    if (bolDebugMode == true) {
+                        console.log("Load resource:" + name + "=>" + localUrl);
+                    }
+                    return localUrl;
+                }
+                return name;
+            }
+        }).then(function () {
+            // 释放 mapBase64BlobUrl
+            for (var key in mapBase64BlobUrl) {
+                var strUrl555 = mapBase64BlobUrl[key];
+                if (myOriginalURL == null ){
+                    URL.revokeObjectURL(strUrl555);
+                }
+                else{
+                    myOriginalURL.revokeObjectURL(strUrl555);
+                }
+            }
+            mapBase64BlobUrl = null;
+            if (myOriginalURL != null){
+                globalThis.URL = myOriginalURL;
+                myOriginalURL = null;
+            }
+        });
+    };
+    document.head.appendChild(jsScript);
+})();
+                `;
+                // 计算JS文件大小（UTF-8编码）
+                const encoder = new TextEncoder();
+                const jsUint8Array = encoder.encode(jsContent);
+                jsFileBytes = jsUint8Array.length;
+
+                // 创建文件并设置下载链接
+                const blob = new Blob([jsContent], { type: 'application/javascript' });
+                blobUrl = URL.createObjectURL(blob);
+
+                // 自动下载
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = outputFileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // 设置手动下载链接
+                manualDownloadLink.href = blobUrl;
+                manualDownloadLink.download = outputFileName;
+                manualDownloadLink.textContent = `手动下载 ${outputFileName}`;
+
+                // 计算压缩比率
+                const compressionRatio = (jsFileBytes / originalTotalBytes * 100).toFixed(2) + '%';
+
+                // 显示总结报告
+                document.getElementById('originalTotalSize').textContent = formatBytes(originalTotalBytes);
+                document.getElementById('jsFileSize').textContent = formatBytes(jsFileBytes);
+                document.getElementById('compressionRatio').textContent = compressionRatio;
+                summaryReport.style.display = 'block';
+
+                updateProgress(100, '处理完成！');
+                logDebugMessage(`打包完成！生成 ${outputFileName}`);
+                logDebugMessage(`总结: 原始总大小 ${formatBytes(originalTotalBytes)}, 生成文件大小 ${formatBytes(jsFileBytes)}, 压缩率 ${compressionRatio}`);
+            } catch (error) {
+                logDebugMessage(`错误: ${error.message}`);
+                updateProgress(0, '处理失败，请查看日志');
+            } finally {
+                downloadBtn.disabled = false;
+                setTimeout(resetProgressBar, 1000);
+            }
+        }
+
+        // 页面卸载时释放blob URL
+        window.addEventListener('beforeunload', () => {
+            if (blobUrl) {
+                URL.revokeObjectURL(blobUrl);
+            }
+        });
+    </script>
+</body>
+</html>
