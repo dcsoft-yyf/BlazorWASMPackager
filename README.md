@@ -4,7 +4,9 @@ Blazor WASM Packager can package all Blazor WebAssembly program files, including
 
 With all due respect to the author's limited knowledge, no tool with similar functions was found, so the decision was made to develop this tool independently.
 
-<img src="[link text](https://raw.githubusercontent.com/dcsoft-yyf/BlazorWASMPackager/refs/heads/main/BlazorWASMPackager.png)"/>
+# Screen snapshort
+
+<img src="https://raw.githubusercontent.com/dcsoft-yyf/BlazorWASMPackager/refs/heads/main/BlazorWASMPackager.png"/>
 
 ## Benefits
 1. **Ease of Use**
