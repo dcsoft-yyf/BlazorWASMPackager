@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,7 @@
     <title>Blazor WASM Packager</title>
     <style>
         body {
-            font-family: Arial, "Microsoft YaHei", sans-serif;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -205,44 +205,69 @@
 <body>
     <h1>Blazor WASM Packager</h1>
     <div class="intro">
-        <p>Release date: October 29, 2025. Website: <a href="https://github.com/dcsoft-yyf/BlazorWASMPackager">https://github.com/dcsoft-yyf/BlazorWASMPackager</a></p>
-        <p>This tool is used to package core resource files of Blazor WebAssembly applications. Please place this HTML file in the root directory of your published Blazor WebAssembly application (the parent directory of _framework), then click the button below. The program will:</p>
+        <p>Release Date: October 29, 2025. Website: <a href="https://github.com/dcsoft-yyf/BlazorWASMPackager">https://github.com/dcsoft-yyf/BlazorWASMPackager</a></p>
+        <p>This tool is used to package core resource files of Blazor WebAssembly applications. Place this HTML file in the root directory of your Blazor WASM application (parent directory of _framework), click the button below, and the program will:</p>
         <ol>
-            <li>Parse the <code>_framework/blazor.boot.json</code> configuration file of the current application (and include it in the packaging result)</li>
+            <li>Parse the current application's <code>_framework/blazor.boot.json</code> configuration file (and include it in the packaged result)</li>
             <li>Force package all resource files listed in boot.json (including JS files)</li>
             <li>Download these resource files and perform maximum GZIP compression</li>
-            <li>Merge user-specified custom scripts into Merge.js and package them together (optional)</li>
-            <li>Generate a JavaScript file containing all resources and provide it for download</li>
+            <li>Merge user-specified custom scripts into Merge.js and include in the package (optional)</li>
+            <li>Generate a JavaScript file containing all resources and provide download</li>
         </ol>
     </div>
 
-    <!-- Output file name input area -->
+    <!-- Output filename input area -->
     <div class="output-filename-container">
-        <label for="outputFileNameInput">Final generated JS file name:</label>
-        <input type="text" id="outputFileNameInput" placeholder="e.g.: MyApp.published.js">
-        <div class="filename-hint">Hint: Leave blank to use the default file name (entryAssembly value + .published.js). Please ensure it includes the .js extension.</div>
+        <label for="outputFileNameInput">Final generated JS filename:</label>
+        <input type="text" id="outputFileNameInput" placeholder="Example: MyApp.published.js">
+        <div class="filename-hint">Hint: Leave empty to use default filename (entryAssembly value + .published.js). Ensure .js extension is included.</div>
     </div>
 
     <!-- Custom script input area -->
     <div class="merge-files-container">
         <label for="mergeFilesInput">Custom JS files to merge (one per line, relative to _framework directory):</label>
-        <textarea id="mergeFilesInput" placeholder="e.g.:
+        <textarea id="mergeFilesInput" placeholder="Example:
 custom-script-1.js
-scripts/custom-script-2.js"></textarea>
-
+scripts/custom-script-2.js">
+</textarea>
+        <!--
+        DCTools20221228.js
+        PageContentDrawer.js
+        WriterControl_API.js
+        WriterControl_CalculateControl.js
+        WriterControl_DateTimeControl.js
+        WriterControl_Dialog.js
+        WriterControl_DialogStaticResources.js
+        WriterControl_DOMPackage.js
+        WriterControl_DrawD3.js
+        WriterControl_DrawFu.js
+        WriterControl_EF.js
+        WriterControl_Event.js
+        WriterControl_FontList.js
+        WriterControl_IO.js
+        WriterControl_KnowledgeBase.js
+        WriterControl_ListBoxControl.js
+        WriterControl_Paint.js
+        WriterControl_Print.js
+        WriterControl_QueryListTableControl.js
+        WriterControl_Rule.js
+        WriterControl_Task.js
+        WriterControl_ToolBar.js
+        WriterControl_UI.js
+        WriterControl_Main.js -->
         <div class="minify-option">
             <input type="checkbox" id="minifyMergeJs">
-            <label for="minifyMergeJs">Remove comments and meaningless spaces when merging custom scripts (handles template strings and regular expressions)</label>
+            <label for="minifyMergeJs">Remove comments and meaningless spaces when merging custom scripts (process template strings and regular expressions)</label>
         </div>
         <div class="minify-option">
             <input type="checkbox" id="removeImportMergeJs" checked>
-            <label for="removeImportMergeJs">Remove <i>import {name} from "a.js"</i> directives when merging custom scripts</label>
+            <label for="removeImportMergeJs">Remove <i>import {name} from "a.js"</i> statements when merging custom scripts</label>
         </div>
 
-        <div class="merge-files-hint">Hint: Enter the names of custom JS files to merge. The program will merge them into Merge.js and include it in the result. Leave blank to not generate Merge.js.</div>
+        <div class="merge-files-hint">Hint: Enter custom JS filenames to merge into Merge.js and include in the result. Leave empty to not generate Merge.js.</div>
     </div>
 
-    <button id="downloadBtn" onclick="processAndDownload()">Package and Download Resource File</button>
+    <button id="downloadBtn" onclick="processAndDownload()">Package and Download Resource Files</button>
 
     <div id="progressContainer">
         <div id="progressBar"></div>
@@ -257,17 +282,17 @@ scripts/custom-script-2.js"></textarea>
     <!-- Summary report area -->
     <div class="report" id="summaryReport" style="display: none;">
         <h3>Packaging Summary Report</h3>
-        <p>Total original file size: <span id="originalTotalSize" class="size-info">-</span></p>
-        <p>Generated JS file size (UTF-8 encoded): <span id="jsFileSize" class="size-info">-</span></p>
+        <p>Original total file size: <span id="originalTotalSize" class="size-info">-</span></p>
+        <p>Generated JS file size (UTF-8 encoding): <span id="jsFileSize" class="size-info">-</span></p>
         <p>Compression ratio: <span id="compressionRatio" class="size-info">-</span></p>
-        <a id="manualDownloadLink" href="#" class="download-link">Manually download the generated resource file</a>
+        <a id="manualDownloadLink" href="#" class="download-link">Manually download generated resource file</a>
     </div>
 
     <div class="note">
-        <strong>Note:</strong> Please ensure this page runs in the root directory of your Blazor WASM application to correctly access files in the <code>_framework</code> directory. Processing time depends on the number and size of resource files, please be patient.
+        <strong>Note:</strong> Ensure this page runs in the root directory of the Blazor WASM application to correctly access files in the <code>_framework</code> directory. Processing time depends on the number and size of resource files, please be patient.
     </div>
 
-    <div class="copyright">Copyright © Nanjing Duchang Information Technology Co., Ltd.</div>
+    <div class="copyright">Copyright by Nanjing DC Information Technology Co., Ltd.</div>
 
     <script>
         const debugOutputEl = document.getElementById('debugOutput');
@@ -280,7 +305,7 @@ scripts/custom-script-2.js"></textarea>
         const outputFileNameInput = document.getElementById('outputFileNameInput');
         let blobUrl = null;
 
-        // Format byte size
+        // Format byte sizes
         function formatBytes(bytes) {
             if (bytes === 0) return '0 Bytes';
 
@@ -310,76 +335,180 @@ scripts/custom-script-2.js"></textarea>
             updateProgress(0, 'Ready');
         }
 
-        /**
-         * Enhanced JS code minification: protects template strings and regular expressions
-         */
-        function minifyJs(code) {
-            // Store content that needs protection: template strings, regular expressions
-            const protectedSegments = [];
-            let tempCode = code;
-            let segmentIndex = 0;
+        function CleanJavaScriptCode(strJSContent, removeComment, removeImport) {
+            // Sub-function: Determine if it's the start of a regex
+            function isStartOfRegex(code, pos) {
+                // Check if current position might be the start of a regex
+                // By looking backwards to see if it's after an operator
+                let i = pos - 1;
+                while (i >= 0 && /\s/.test(code[i])) {
+                    i--;
+                }
 
-            // Match template strings `...`, supporting nested ` (via escape character \`)
-            const templateStringRegex = /`(?:\\`|[^`])*`/g;
-            tempCode = tempCode.replace(templateStringRegex, (match) => {
-                const index = segmentIndex++;
-                protectedSegments.push({ type: 'template', content: match });
-                return `__PROTECTED_${index}__`;
-            });
+                if (i < 0) return true; // If at the start, might be a regex
 
-            // Match regular expressions, need to avoid misjudgment in division operator / and other contexts
-            // This regex matches typical regular expression literals
-            const regexLiteralRegex = /(?<![=<>!*/]|\/{2,})\/(?:\\\/|[^/])+\/[gimuy]*/g;
-            tempCode = tempCode.replace(regexLiteralRegex, (match) => {
-                const index = segmentIndex++;
-                protectedSegments.push({ type: 'regex', content: match });
-                return `__PROTECTED_${index}__`;
-            });
+                const prevChar = code[i];
 
-            // Match single-quoted and double-quoted strings
-            const stringLiteralRegex = /(["'])(\\.|[^\\\1])*\1/g;
-            tempCode = tempCode.replace(stringLiteralRegex, (match) => {
-                const index = segmentIndex++;
-                protectedSegments.push({ type: 'string', content: match });
-                return `__PROTECTED_${index}__`;
-            });
+                // If previous character is one of these operators, likely a regex
+                const regexStarters = ['(', '=', ',', '[', '!', '&', '|', '?', ':', ';', '{', '}', '~', '*'];
+                if (regexStarters.includes(prevChar)) {
+                    return true;
+                }
 
-            // Remove single-line comments
-            let minified = tempCode.replace(/\/\/.*$/gm, '');
+                // Check if after a keyword (like return, typeof, etc.)
+                const keywordCheck = code.substring(0, i + 1);
+                const keywords = ['return', 'typeof', 'instanceof', 'new', 'delete', 'void', 'yield'];
 
-            // Remove multi-line comments
-            minified = minified.replace(/\/\*[\s\S]*?\*\//g, '');
+                for (const keyword of keywords) {
+                    const keywordPos = keywordCheck.lastIndexOf(keyword);
+                    if (keywordPos >= 0) {
+                        const afterKeyword = keywordCheck.substring(keywordPos + keyword.length, i + 1).trim();
+                        if (afterKeyword === '') {
+                            return true;
+                        }
+                    }
+                }
 
-            // Process spaces and newlines
-            minified = minified
-                .replace(/^\s+|\s+$/gm, '')  // Remove leading and trailing spaces
-                .replace(/\n+/g, '\n')       // Merge multiple blank lines into one
-                .replace(/^\n/gm, '')        // Remove empty lines
-                .replace(/\s+/g, ' ');       // Compress spaces
+                // If other cases (like after variable name), not a regex
+                if (/[a-zA-Z0-9_$]/.test(prevChar)) {
+                    return false;
+                }
 
-            // Restore protected segments
-            minified = minified.replace(/__PROTECTED_(\d+)__/g, (match, index) => {
-                return protectedSegments[parseInt(index, 10)].content;
-            });
+                return true;
+            }
 
-            // Safely handle spaces around operators
-            const operators = [
-                ';', '{', '}', '(', ')', ',', '=', '+', '-', '*', '/',
-                '==', '===', '!', '!=', '!==', '&&', '||', '>', '>=', '<', '<='
-            ];
+            // Sub-function: Find the end of a regex
+            function findRegexEnd(code, startPos) {
+                let i = startPos + 1; // Skip starting /
 
-            // Sort operators by length to ensure longer ones are processed first
-            operators.sort((a, b) => b.length - a.length);
+                while (i < code.length) {
+                    const char = code[i];
 
-            operators.forEach(op => {
-                // Escape special characters
-                const escapedOp = op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // Process spaces around operators without affecting regex and template strings
-                minified = minified.replace(new RegExp(`\\s*${escapedOp}\\s*`, 'g'), op);
-            });
+                    if (char === '\\') {
+                        // Skip escape character
+                        i += 2;
+                        continue;
+                    }
 
-            return minified.trim();
+                    if (char === '/') {
+                        // Found regex end
+                        i++;
+                        // Check for modifiers
+                        while (i < code.length && /[gimysu]/.test(code[i])) {
+                            i++;
+                        }
+                        return i;
+                    }
+
+                    i++;
+                }
+
+                // If no end found, return original position
+                return startPos;
+            }
+
+            let result = strJSContent;
+
+            // Process import statements
+            if (removeImport === true) {
+                // Match various import statement formats
+                result = result.replace(/^\s*import\s+.*?from\s+["'][^"']*["']\s*;?\s*$/gm, '');
+                result = result.replace(/^\s*import\s+["'][^"']*["']\s*;?\s*$/gm, '');
+                result = result.replace(/^\s*import\s+\{.*?\}\s+from\s+["'][^"']*["']\s*;?\s*$/gm, '');
+                result = result.replace(/^\s*import\s+\*\s+as\s+\w+\s+from\s+["'][^"']*["']\s*;?\s*$/gm, '');
+            }
+
+            if (removeComment === true) {
+                let cleanedCode = '';
+                let i = 0;
+                const len = result.length;
+
+                while (i < len) {
+                    const char = result[i];
+                    const nextChar = i < len - 1 ? result[i + 1] : '';
+
+                    // Check if in a string
+                    if (char === '"' || char === "'" || char === '`') {
+                        const quote = char;
+                        cleanedCode += char;
+                        i++;
+
+                        // Process string content, including escape characters
+                        while (i < len) {
+                            const currentChar = result[i];
+                            cleanedCode += currentChar;
+
+                            if (currentChar === '\\') {
+                                // Skip escape character
+                                i++;
+                                if (i < len) {
+                                    cleanedCode += result[i];
+                                }
+                            } else if (currentChar === quote) {
+                                // Found string end
+                                i++;
+                                break;
+                            }
+                            i++;
+                        }
+                        continue;
+                    }
+
+                    if (char === '/') {
+                        // Check if it's a regex
+                        const isRegex = isStartOfRegex(result, i);
+
+                        if (isRegex) {
+                            const regexEnd = findRegexEnd(result, i);
+                            cleanedCode += result.substring(i, regexEnd);
+                            i = regexEnd;
+                            continue;
+                        }
+                    }
+
+                    // Check for comments
+                    if (char === '/' && nextChar === '/') {
+                        // Single line comment
+                        i += 2;
+                        while (i < len && result[i] !== '\n') {
+                            i++;
+                        }
+                        // Keep newline
+                        if (i < len) {
+                            cleanedCode += result[i];
+                            i++;
+                        }
+                        continue;
+                    }
+
+                    if (char === '/' && nextChar === '*') {
+                        // Multi-line comment
+                        i += 2;
+                        while (i < len - 1 && !(result[i] === '*' && result[i + 1] === '/')) {
+                            i++;
+                        }
+                        if (i < len - 1) {
+                            i += 2;
+                        }
+                        continue;
+                    }
+
+                    // Normal character
+                    cleanedCode += char;
+                    i++;
+                }
+
+                // Remove extra blank lines and leading/trailing spaces
+                result = cleanedCode
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line !== '')
+                    .join('\n');
+            }
+
+            return result;
         }
+
 
         /**
          * Perform GZIP compression with maximum compression level
@@ -443,10 +572,10 @@ scripts/custom-script-2.js"></textarea>
         }
 
         /**
-         * Process user-specified custom JS file merging
+         * Process user-specified custom JS files for merging
          */
         async function processCustomJsFiles(originalTotalBytes) {
-            // Get filenames entered by user, remove empty lines and whitespace
+            // Get user input filenames, remove empty lines and trim spaces
             const inputText = mergeFilesInput.value.trim();
             if (!inputText) {
                 logDebugMessage('No custom JS files specified, not generating Merge.js');
@@ -463,8 +592,9 @@ scripts/custom-script-2.js"></textarea>
                 return { originalTotalBytes, fileEntries: [] };
             }
 
-            // Get minification option
-            const shouldMinify = minifyMergeJs.checked;
+            // Get compression options
+            const shouldMinify = document.getElementById('minifyMergeJs').checked;
+            const shouldRemoveImportMergeJs = document.getElementById("removeImportMergeJs").checked;
             logDebugMessage(`Processing ${filenames.length} custom JS files: ${filenames.join(', ')} ${shouldMinify ? '(will minify code)' : ''}`);
 
             // Download and merge all specified JS files
@@ -485,9 +615,9 @@ scripts/custom-script-2.js"></textarea>
                     originalTotalBytes += originalFileSize;
                     originalMergedSize += originalFileSize;
 
-                    // Minify if needed
-                    if (shouldMinify) {
-                        const minifiedContent = minifyJs(content);
+                    // If minification is needed, process individual file content
+                    if (shouldMinify === true || shouldRemoveImportMergeJs === true) {
+                        const minifiedContent = CleanJavaScriptCode(content, shouldMinify, shouldRemoveImportMergeJs);
                         content = minifiedContent;
                     }
 
@@ -504,23 +634,32 @@ scripts/custom-script-2.js"></textarea>
             }
 
             if (mergedContent.trim() === '') {
-                logDebugMessage('All custom files processing failed, not generating Merge.js');
+                logDebugMessage('All custom files failed to process, not generating Merge.js');
                 return { originalTotalBytes, fileEntries: [] };
             }
 
             // Process merged content
             let finalContent = mergedContent;
 
-            // Minify if needed and not already done
+            // If minification is needed and not yet done
             if (shouldMinify) {
                 finalContent = minifyJs(finalContent);
                 logDebugMessage(`Custom scripts minified, original size: ${formatBytes(originalMergedSize)}, minified: ${formatBytes(new TextEncoder().encode(finalContent).length)}`);
             }
 
+            /*
+               const blob3 = new Blob([finalContent], { type: 'application/javascript' });
+               blobUrl3 = URL.createObjectURL(blob3);
+               const a = document.createElement('a');
+               a.href = blobUrl3;
+               a.download = "merge.js";
+               document.body.appendChild(a);
+               a.click();
+               document.body.removeChild(a);*/
             // Compress merged content
             const mergedUint8 = new TextEncoder().encode(finalContent);
             const compressed = await gzipCompress(mergedUint8);
-            logDebugMessage(`Merge.js compression completed: ${formatBytes(compressed.length)}`);
+            logDebugMessage(`Merge.js compressed: ${formatBytes(compressed.length)}`);
 
             // Convert to Base64
             const base64Content = uint8ArrayToBase64(compressed);
@@ -531,14 +670,14 @@ scripts/custom-script-2.js"></textarea>
                 content: base64Content
             });
 
-            logDebugMessage('Merge.js generated and added to packaging list');
+            logDebugMessage('Merge.js generated and added to package list');
             return { originalTotalBytes, fileEntries: mergeFileEntries };
         }
 
         async function processAndDownload() {
             const downloadBtn = document.getElementById('downloadBtn');
             downloadBtn.disabled = true;
-            updateProgress(0, 'Starting processing...');
+            updateProgress(0, 'Starting process...');
             clearDebugOutput();
             logDebugMessage('Starting packaging process');
 
@@ -556,10 +695,10 @@ scripts/custom-script-2.js"></textarea>
 
             try {
                 if (!window.CompressionStream) {
-                    throw new Error('Browser does not support GZIP compression. Please use the latest version of Chrome, Edge, or Firefox');
+                    throw new Error('Browser does not support GZIP compression, please use latest Chrome, Edge or Firefox');
                 }
 
-                // 1. Process user-specified custom JS file merging
+                // 1. Process user-specified custom JS files for merging
                 updateProgress(3, 'Processing custom files...');
                 const customJsResult = await processCustomJsFiles(originalTotalBytes);
                 originalTotalBytes = customJsResult.originalTotalBytes;
@@ -571,10 +710,10 @@ scripts/custom-script-2.js"></textarea>
 
                 const bootJsonResponse = await fetch('_framework/blazor.boot.json');
                 if (!bootJsonResponse.ok) {
-                    throw new Error(`Failed to load blazor.boot.json (${bootJsonResponse.statusText})`);
+                    throw new Error(`Unable to load blazor.boot.json (${bootJsonResponse.statusText})`);
                 }
 
-                // Get original content and size of blazor.boot.json
+                // Get blazor.boot.json original content and size
                 const bootJsonText = await bootJsonResponse.text();
                 const bootJsonBytes = new TextEncoder().encode(bootJsonText).length;
                 originalTotalBytes += bootJsonBytes;
@@ -595,9 +734,9 @@ scripts/custom-script-2.js"></textarea>
                     logDebugMessage(`Using default filename: ${outputFileName}`);
                 }
 
-                updateProgress(10, 'Configuration file parsing completed');
+                updateProgress(10, 'Configuration file parsing complete');
 
-                // 3. Collect list of files to process (all files listed in boot.json, force package)
+                // 3. Collect files to process (all files listed in boot.json, force package)
                 const filesToProcess = ["blazor.webassembly.js"];
                 const resourceTypes = ['runtime', 'assembly',
                     'runtimeAssets', 'pdb', 'jsModuleNative',
@@ -646,6 +785,7 @@ scripts/custom-script-2.js"></textarea>
                     try {
                         updateProgress(15 + (processedCount * progressPerFile),
                             `Processing (${processedCount}/${totalFiles}): ${filename}`);
+                        //var url4 = new URL(filename, "_framework").href;
                         var url5 = new URL("_framework/" + filename, document.baseURI).href;
                         const fileResponse = await fetch(url5);
                         if (!fileResponse.ok) {
@@ -686,21 +826,28 @@ scripts/custom-script-2.js"></textarea>
                 }
 
                 if (fileEntries.length <= (customFileEntries.length > 0 ? 1 : 0)) {
-                    throw new Error('All resource files processing failed');
+                    throw new Error('All resource files failed to process');
                 }
 
-                // 5. Generate output file, add current date and time on first line
+                // 5. Generate output file, add current date/time as first line
                 logDebugMessage(`Generating output file: ${outputFileName}`);
                 updateProgress(98, 'Generating output file...');
 
-                // Get current date and time, formatted as: YYYY-MM-DD HH:MM:SS
+                // Get current date/time, format as: YYYY-MM-DD HH:MM:SS
                 const now = new Date();
                 const dateTimeStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 
-                // Build JS content, first line is date-time comment
-                let jsContent = `// Gen at ${dateTimeStr}\n by https://github.com/dcsoft-yyf/BlazorWASMPackager`;
-                jsContent += '\n"use strict";\n window.__DCAllFileContents20251024 = {\n';
-
+                // Build JS content, first line is date/time comment
+                let jsContent = `// Gen at ${dateTimeStr} by https://github.com/dcsoft-yyf/BlazorWASMPackager
+"use strict";
+(async function () {
+            if (window.__DCWriter5Started == true) {
+                // Avoid duplicate calls
+                return;
+            }
+            window.__DCWriter5Started = true;
+            var allFileContents = {
+                        `;
                 fileEntries.forEach((entry, index) => {
                     const isLastEntry = index === fileEntries.length - 1;
                     const key = escapeJsKey(entry.filename);
@@ -710,189 +857,186 @@ scripts/custom-script-2.js"></textarea>
 
                 jsContent += '};';
                 jsContent += `
-(async function () {
-        if (window.__DCWriter5Started == true) {
-            // Avoid duplicate calls
-            return;
-        }
-        var allFileContents = window.__DCAllFileContents20251024; window.__DCAllFileContents20251024 = null;
-        window.__DCWriter5Started = true;
-        // Get resource base path
-        var bolDebugMode = false;
-        function ConverToBoolean(strValue, bolDefaultValue) {
-            if (strValue == null || strValue.length == 0) return bolDefaultValue;
-            strValue = strValue.trim().toLowerCase();
-            if (strValue == "true") return true;
-            if (strValue == "false") return false;
-            return bolDefaultValue;
-        };
-        if (document.currentScript != null) {
-            bolDebugMode = ConverToBoolean(document.currentScript.getAttribute("debugmode"), false);
-        }
-        function GetFileExt( strFileName ){
-            var index345 = strFileName.lastIndexOf('.');
-            if (index345 > 0) {
-                return strFileName.substring(index345).trim().toLowerCase();
-            }
-            return null;
-        };
-        var jsScript = document.createElement("script");
-        jsScript.setAttribute("language", "javascript");
-        jsScript.src = "_framework/blazor.webassembly.js";
-        var strEnvironment = null;
-        var mapBase64BlobUrl = {};
-        if (window.DecompressionStream && allFileContents != null) {
-            function StartsWith( strText , strHeader ){
-                return strText.length >= strHeader.length
-                    && strText.substring( 0 , strHeader.length) == strHeader;
+            // Get resource base path
+            var bolDebugMode = false;
+            function ConverToBoolean(strValue, bolDefaultValue) {
+                if (strValue == null || strValue.length == 0) return bolDefaultValue;
+                strValue = strValue.trim().toLowerCase();
+                if (strValue == "true") return true;
+                if (strValue == "false") return false;
+                return bolDefaultValue;
             };
-            // Enable local Base64 resources
-            /** Convert a Base64 string to byte array, GZIP decompress, and return an internal download URL */
-            async function Base64ToBlobUrl(strBase64String, strFileName) {
-                try {
-                    const binaryStr = atob(strBase64String);
-                    const uint8Array = new Uint8Array(binaryStr.length);
-                    for (let i = binaryStr.length - 1; i >= 0; i--) {
-                        uint8Array[i] = binaryStr.charCodeAt(i);
-                    }
-                    const sourceStream = new Blob([uint8Array]).stream();
-                    const decompressedStream = sourceStream.pipeThrough(
-                        new DecompressionStream('gzip')
-                    );
-                    const blob = await new Response(decompressedStream).blob();
-                    var strMimeType = "application/x-msdownload";
-                    if (strFileName != null) {
-                        var strExt = GetFileExt( strFileName );
-                        switch (strExt) {
-                            case ".js": strMimeType = "application/javascript"; break;
-                            case ".json": strMimeType = "application/json"; break;
-                            case ".wasm": strMimeType = "application/wasm"; break;
-                            case ".blat": strMimeType = "application/octet-stream"; break;
-                            case ".dat": strMimeType = "application/octet-stream"; break;
-                            case ".dll": strMimeType = "application/x-msdownload"; break;
+            if (document.currentScript != null) {
+                //debugger;
+                bolDebugMode = ConverToBoolean(document.currentScript.getAttribute("debugmode"), false);
+            }
+            function GetFileExt( strFileName ){
+                var index345 = strFileName.lastIndexOf('.');
+                if (index345 > 0) {
+                    return strFileName.substring(index345).trim().toLowerCase();
+                }
+                return null;
+            };
+            var jsScript = document.createElement("script");
+            jsScript.setAttribute("language", "javascript");
+            jsScript.src = "_framework/blazor.webassembly.js";
+            var strEnvironment = null;
+            var mapBase64BlobUrl = {};
+            if (window.DecompressionStream && allFileContents != null) {
+                function StartsWith( strText , strHeader ){
+                    return strText.length >= strHeader.length
+                        && strText.substring( 0 , strHeader.length) == strHeader;
+                };
+                // Enable local Base64 resources
+                /** Convert a Base64 string to a byte array after GZIP decompression and return an internal download URL */
+                async function Base64ToBlobUrl(strBase64String, strFileName) {
+                    try {
+                        const binaryStr = atob(strBase64String);
+                        const uint8Array = new Uint8Array(binaryStr.length);
+                        for (let i = binaryStr.length - 1; i >= 0; i--) {
+                            uint8Array[i] = binaryStr.charCodeAt(i);
                         }
-                    }
-                    const typedBlob = new Blob([blob], { type: strMimeType });
-                    const blobUrl = URL.createObjectURL(typedBlob);
-                    return blobUrl;
-                } catch (error) {
-                    console.error('Conversion failed:', error);
-                    throw error;
-                }
-            }
-            for (var key in allFileContents) {
-                var strUrl44 = await Base64ToBlobUrl(allFileContents[key], key);
-                if (strUrl44 != null && strUrl44.length > 0) {
-                    mapBase64BlobUrl[key] = strUrl44;
-                    if (key == "Merge.js") {
-                        strEnvironment = strUrl44;
-                    }
-                    else if (key == "blazor.webassembly.js") {
-                        jsScript.src = strUrl44;
-                    }
-                }
-            }
-        }
-        var myOriginalURL = null;
-        `;
-                if (intRuntimeVersion == 9) {
-                    jsContent += `
-        myOriginalURL = globalThis.URL || window.URL;
-        var newURL = function(strUrl , strBase){
-            this.toString = function () {
-                return this.href;
-            };
-            if(strBase == null || strBase.length == 0 ){
-                this.href = strUrl;
-                return;
-            }
-            if (strUrl.length > 5 && strUrl.substring(0, 5) == "blob:") {
-                this.href = strUrl;
-                return;
-            }
-            if (strUrl == "./blazor.boot.json") {
-                var strUrl4 = mapBase64BlobUrl["blazor.boot.json"];
-                if (strUrl4 != null && strUrl4.length > 0) {
-                    this.href = strUrl4;
-                    return;
-                }
-            }
-            if (strBase.length > 5 && strBase.substring( 0 , 5 ) == "blob:")
-            {
-                var strUrl5 = mapBase64BlobUrl[ strUrl];
-                if (strUrl5 != null && strUrl5.length > 0 )
-                {
-                    this.href = strUrl5;
-                }
-                return;
-            }
-            if (GetFileExt( strUrl ) == ".js")
-            {
-                var strUrl2 = mapBase64BlobUrl[strUrl];
-                if (strUrl2 != null && strUrl2.length > 0) {
-                    this.href = strUrl2;
-                    return;
-                }
-            }
-            return new myOriginalURL( strUrl , strBase);
-        };
-        globalThis.URL = newURL;`;
-                }
-                jsContent += `
-        allFileContents = null;
-        jsScript.setAttribute("autostart", "false");
-        jsScript.onload = function () {
-            Blazor.start({
-                environment: strEnvironment,
-                loadBootResource: function (type, name, defaultUri, integrity) {
-                    if (name == 'blazor.boot.json') {
-                        // Support for micro-frontend framework MicroApp
-                        if (window.__MICRO_APP_WINDOW__) {
-                            __MICRO_APP_WINDOW__.document.defaultView.Blazor = window.Blazor;
-                            __MICRO_APP_WINDOW__.document.defaultView.DotNet = window.DotNet;
-                            if (window.rawWindow) {
-                                window.rawWindow.Blazor = window.Blazor;
-                                window.rawWindow.DotNet = window.DotNet;
+                        //const uint8Array = new TextEncoder().encode(binaryStr);
+                        const sourceStream = new Blob([uint8Array]).stream();
+                        const decompressedStream = sourceStream.pipeThrough(
+                            new DecompressionStream('gzip')
+                        );
+                        const blob = await new Response(decompressedStream).blob();
+                        var strMimeType = "application/x-msdownload";
+                        if (strFileName != null) {
+                            var strExt = GetFileExt( strFileName );
+                            switch (strExt) {
+                                case ".js": strMimeType = "application/javascript"; break;
+                                case ".json": strMimeType = "application/json"; break;
+                                case ".wasm": strMimeType = "application/wasm"; break;
+                                case ".blat": strMimeType = "application/octet-stream"; break;
+                                case ".dat": strMimeType = "application/octet-stream"; break;
+                                case ".dll": strMimeType = "application/x-msdownload"; break;
                             }
                         }
+                        const typedBlob = new Blob([blob], { type: strMimeType });
+                        const blobUrl = URL.createObjectURL(typedBlob);
+                        return blobUrl;
+                    } catch (error) {
+                        console.error('Conversion failed:', error);
+                        throw error;
                     }
-                    // Support for micro-frontend framework QianKun
-                    if (window.__POWERED_BY_QIANKUN__) {
-                        window.document.defaultView.Blazor = window.Blazor;
-                        window.document.defaultView.DotNet = window.DotNet;
-                    }
-                    // Enable local Base64 resources
-                    var localUrl = mapBase64BlobUrl[name];
-                    if (localUrl != null && localUrl.length > 0) {
-                        if (bolDebugMode == true) {
-                            console.log("Load resource:" + name + "=>" + localUrl);
+                }
+                for (var key in allFileContents) {
+                    var strUrl44 = await Base64ToBlobUrl(allFileContents[key], key);
+                    if (strUrl44 != null && strUrl44.length > 0) {
+                        mapBase64BlobUrl[key] = strUrl44;
+                        if (key == "Merge.js") {
+                            strEnvironment = strUrl44;
                         }
-                        return localUrl;
-                    }
-                    return name;
-                }
-            }).then(function () {
-                // Release mapBase64BlobUrl
-                for (var key in mapBase64BlobUrl) {
-                    var strUrl555 = mapBase64BlobUrl[key];
-                    if (myOriginalURL == null ){
-                        URL.revokeObjectURL(strUrl555);
-                    }
-                    else{
-                        myOriginalURL.revokeObjectURL(strUrl555);
+                        else if (key == "blazor.webassembly.js") {
+                            jsScript.src = strUrl44;
+                        }
                     }
                 }
-                mapBase64BlobUrl = null;
-                if (myOriginalURL != null){
-                    globalThis.URL = myOriginalURL;
-                    myOriginalURL = null;
+            }
+            allFileContents = null;
+            var myOriginalURL = null;
+            `;
+                if (intRuntimeVersion == 9) {
+                    jsContent += `
+            myOriginalURL = globalThis.URL || window.URL;
+            var newURL = function(strUrl , strBase){
+                this.toString = function () {
+                    return this.href;
+                };
+                if(strBase == null || strBase.length == 0 ){
+                    this.href = strUrl;
+                    return;
                 }
-            });
-        };
-        document.head.appendChild(jsScript);
+                if (strUrl.length > 5 && strUrl.substring(0, 5) == "blob:") {
+                    this.href = strUrl;
+                    return;
+                }
+                if (strUrl == "./blazor.boot.json") {
+                    var strUrl4 = mapBase64BlobUrl["blazor.boot.json"];
+                    if (strUrl4 != null && strUrl4.length > 0) {
+                        this.href = strUrl4;
+                        //globalThis.URL = myOriginalURL;
+                        return;
+                    }
+                }
+                if (strBase.length > 5 && strBase.substring( 0 , 5 ) == "blob:")
+                {
+                    var strUrl5 = mapBase64BlobUrl[ strUrl];
+                    if (strUrl5 != null && strUrl5.length > 0 )
+                    {
+                        this.href = strUrl5;
+                    }
+                    return;
+                }
+                if (GetFileExt( strUrl ) == ".js")
+                {
+                    var strUrl2 = mapBase64BlobUrl[strUrl];
+                    if (strUrl2 != null && strUrl2.length > 0) {
+                        this.href = strUrl2;
+                        return;
+                    }
+                }
+                return new myOriginalURL( strUrl , strBase);
+            };
+            globalThis.URL = newURL;`;
+                }
+                jsContent += `
+            jsScript.setAttribute("autostart", "false");
+            jsScript.onload = function () {
+                Blazor.start({
+                    environment: strEnvironment,
+                    loadBootResource: function (type, name, defaultUri, integrity) {
+                        if (name == 'blazor.boot.json') {
+                            // Support for micro-frontend framework MicroApp
+                            if (window.__MICRO_APP_WINDOW__) {
+                                __MICRO_APP_WINDOW__.document.defaultView.Blazor = window.Blazor;
+                                __MICRO_APP_WINDOW__.document.defaultView.DotNet = window.DotNet;
+                                if (window.rawWindow) {
+                                    window.rawWindow.Blazor = window.Blazor;
+                                    window.rawWindow.DotNet = window.DotNet;
+                                }
+                            }
+                        }
+                        // Support for micro-frontend framework QianKun
+                        if (window.__POWERED_BY_QIANKUN__) {
+                            window.document.defaultView.Blazor = window.Blazor;
+                            window.document.defaultView.DotNet = window.DotNet;
+                        }
+                        //if (GetFileExt( name ) == ".js") return '_framework/' + name;
+                        // Enable local Base64 resources
+                        var localUrl = mapBase64BlobUrl[name];
+                        if (localUrl != null && localUrl.length > 0) {
+                            if (bolDebugMode == true) {
+                                console.log("Load resource:" + name + "=>" + localUrl);
+                            }
+                            return localUrl;
+                        }
+                        return name;
+                    }
+                }).then(function () {
+                    // Release mapBase64BlobUrl
+                    for (var key in mapBase64BlobUrl) {
+                        var strUrl555 = mapBase64BlobUrl[key];
+                        if (myOriginalURL == null ){
+                            URL.revokeObjectURL(strUrl555);
+                        }
+                        else{
+                            myOriginalURL.revokeObjectURL(strUrl555);
+                        }
+                    }
+                    mapBase64BlobUrl = null;
+                    if (myOriginalURL != null){
+                        globalThis.URL = myOriginalURL;
+                        myOriginalURL = null;
+                    }
+                });
+            };
+            document.head.appendChild(jsScript);
 })();
-                    `;
-                // Calculate JS file size (UTF-8 encoded)
+                        `;
+                // Calculate JS file size (UTF-8 encoding)
                 const encoder = new TextEncoder();
                 const jsUint8Array = encoder.encode(jsContent);
                 jsFileBytes = jsUint8Array.length;
@@ -901,7 +1045,7 @@ scripts/custom-script-2.js"></textarea>
                 const blob = new Blob([jsContent], { type: 'application/javascript' });
                 blobUrl = URL.createObjectURL(blob);
 
-                // Auto-download
+                // Auto download
                 const a = document.createElement('a');
                 a.href = blobUrl;
                 a.download = outputFileName;
@@ -912,23 +1056,23 @@ scripts/custom-script-2.js"></textarea>
                 // Set manual download link
                 manualDownloadLink.href = blobUrl;
                 manualDownloadLink.download = outputFileName;
-                manualDownloadLink.textContent = `Manually download ${outputFileName}`;
+                manualDownloadLink.textContent = `Download ${outputFileName} manually`;
 
                 // Calculate compression ratio
                 const compressionRatio = (jsFileBytes / originalTotalBytes * 100).toFixed(2) + '%';
 
-                // Display summary report
+                // Show summary report
                 document.getElementById('originalTotalSize').textContent = formatBytes(originalTotalBytes);
                 document.getElementById('jsFileSize').textContent = formatBytes(jsFileBytes);
                 document.getElementById('compressionRatio').textContent = compressionRatio;
                 summaryReport.style.display = 'block';
 
-                updateProgress(100, 'Processing completed!');
-                logDebugMessage(`Packaging completed! Generated ${outputFileName}`);
+                updateProgress(100, 'Processing complete!');
+                logDebugMessage(`Packaging complete! Generated ${outputFileName}`);
                 logDebugMessage(`Summary: Original total size ${formatBytes(originalTotalBytes)}, Generated file size ${formatBytes(jsFileBytes)}, Compression ratio ${compressionRatio}`);
             } catch (error) {
                 logDebugMessage(`Error: ${error.message}`);
-                updateProgress(0, 'Processing failed, please check logs');
+                updateProgress(0, 'Processing failed, check log');
             } finally {
                 downloadBtn.disabled = false;
                 setTimeout(resetProgressBar, 1000);
