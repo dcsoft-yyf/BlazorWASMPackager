@@ -1,10 +1,13 @@
 # Blazor WASM Packager
-## Introduction
+## Introduction  [[中文版]](#blazor-wasm-程序打包器)
 Blazor WASM Packager can package all Blazor WebAssembly program files, including `js`, `wasm`, `dll`, `json` and other files, into a single JS file after GZIP compression. It greatly simplifies the deployment process, optimizes application loading performance, and enables cross-origin calls for Blazor WASM.
 
 With all due respect to the author's limited knowledge, no tool with similar functions was found, so the decision was made to develop this tool independently.
+## Demo for results
 
-# Screen snapshort
+[https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample](https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample)
+
+## Screen snapshort
 
 <img src="https://raw.githubusercontent.com/dcsoft-yyf/BlazorWASMPackager/refs/heads/main/BlazorWASMPackager.png"/>
 
@@ -36,6 +39,61 @@ With all due respect to the author's limited knowledge, no tool with similar fun
    - Supports environment adaptation for micro-frontend architectures (MicroApp/ QianKun)
    - Facilitates version management and implementation of caching strategies
 
+## How I Developed This Software?
+I developed this software with the help of Doubao AI (www.doubao.com). First, I used the following prompts to create the main body of this HTML file step by step:
+
+1. Generate an HTML page with JS code to implement the following functions:
+   1.Parse the `_framework/blazor.boot.json` file in the current path, and parse the attribute names under the `resources/runtime|assembly|runtimeAssets|pdb` nodes in it.
+   2.Use this attribute name as the file name, then download these files, obtain the binary content, compress it using GZIP, and convert it to a Base64 string. Wrap the Base64 string, with 128 characters per line.
+   3.Create a new string in JavaScript format. Then define "window.__DCFileContents = { "file name": "Base64 string" }"
+   4.Provide a "Download" button on the interface to load the generated JS string using the JS MIME type.
+
+2. Do not use pako; use the browser's built-in GZIP module directly.
+
+3. This is a Blazor WASM program packager; modify the text description of the HTML.
+
+4. The Base64 string should not be too long; it should wrap automatically after 128 characters, and the output text should be automatically appended and displayed at the bottom. Clear the interface of the debug output text before each generation, then start appending and displaying the debug output text.
+
+5. Do not output a preview of the Base64 content; remove the current debug text from it, and only keep the debug text appending method at the bottom for output.
+
+6. The width of the debug output text box is 100%, and a progress bar is added below it. Remove the status element in the middle.
+
+7. The debug output text box has a fixed initial width; the progress bar displays progress text prompts in the middle. Add copyright information: "Copyright © Nanjing Duchang Information Technology Co., Ltd."
+
+8. The final generated Base64 string in JS does not wrap automatically after 128 characters. 2. Program error: BlazorWASMPackage.html:260 Error processing file dotnet.wasm: Maximum call stack size exceeded, this file will be skipped
+   processAndDownload @ BlazorWASMPackage.html:260
+   BlazorWASMPackage.html:260 Error processing file icudt_CJK.dat: Maximum call stack size exceeded, this file will be skipped
+   The width of debugOutput should be 100%, and the Base64 string in the finally generated JS must wrap automatically after 128 characters.
+   It has nothing to do with .csproj; modify the JS in the HTML to ensure that the Base64 string in the finally generated JS wraps automatically after 128 characters.
+
+9. Modify `uint8ArrayToBase64()`, convert every 32 bytes here, then add a line break and carriage return character, and directly generate a BASE64 string with line breaks here. The progress bar text is left-aligned.
+
+10. In `uint8ArrayToBase64()`, each group of bytes is 129 to avoid mismatched Base64 conversion lengths.
+
+11. Do not use JSON intermediate format conversion; directly concatenate to generate JS strings.
+
+12. For Base64 string output, use the \` \` format to avoid `\n` escape characters, and output the Base64 string with line breaks directly in JS.
+
+13. All byte lengths here are formatted for output, using KB and MB units according to the size. Accurate to two decimal places.
+    Include `blazor.boot.json` in the packaging. Use the maximum compression ratio for GZIP. Add a manual click download link in the summary report. Reset the progress bar after processing is completed. Adjust the color of the progress bar; the blue background with black text is unclear.
+
+14. The generated JS file name uses the `entryAssembly` value under bool.json plus the suffix ".published.js".
+
+15. Files with empty hashes cannot be skipped; all files must be processed unconditionally.
+
+16. Add a multi-line text box to allow users to enter several JS file names, then during packaging, read these JS files in the `_framework` directory, merge them into one `Merge.js`, and participate in the packaging. If not specified by the user, `Merge.js` will not be generated.
+
+17. The JS listed in boot.json must be packaged compulsorily and not merged into merge.js. The text box is for users to enter custom script .js file names. In addition, the first line of the finally generated js file must display the current date and time.
+
+18. Add a checkbox to allow users to choose whether to delete comments and meaningless spaces in mergs.js.
+
+19. Add a single-line text box for entering a custom final JS file name; if empty, the default file name is used.
+
+20. Simplify the debug output text; by default, do not minify merge.js spaces and comments. Ensure that the merge.js minification result is correct.
+
+21. For strings in JS, take into account multi-line strings like \` \`, and regular expressions that may appear in JS code; they must not be damaged.
+
+In this way, I used AI to create the initial version, then made subsequent modifications manually. Finally, the current version was formed.
 
 ## Code Execution Process
 ### I. Initialization Phase
@@ -142,61 +200,6 @@ With all due respect to the author's limited knowledge, no tool with similar fun
    - Preserves key syntax structures during custom JS minification (template strings, regular expressions)
 
 
-## How I Developed This Software
-I developed this software with the help of Doubao AI (www.doubao.com). First, I used the following prompts to create the main body of this HTML file step by step:
-
-1. Generate an HTML page with JS code to implement the following functions:
-   1.Parse the `_framework/blazor.boot.json` file in the current path, and parse the attribute names under the `resources/runtime|assembly|runtimeAssets|pdb` nodes in it.
-   2.Use this attribute name as the file name, then download these files, obtain the binary content, compress it using GZIP, and convert it to a Base64 string. Wrap the Base64 string, with 128 characters per line.
-   3.Create a new string in JavaScript format. Then define "window.__DCFileContents = { "file name": "Base64 string" }"
-   4.Provide a "Download" button on the interface to load the generated JS string using the JS MIME type.
-
-2. Do not use pako; use the browser's built-in GZIP module directly.
-
-3. This is a Blazor WASM program packager; modify the text description of the HTML.
-
-4. The Base64 string should not be too long; it should wrap automatically after 128 characters, and the output text should be automatically appended and displayed at the bottom. Clear the interface of the debug output text before each generation, then start appending and displaying the debug output text.
-
-5. Do not output a preview of the Base64 content; remove the current debug text from it, and only keep the debug text appending method at the bottom for output.
-
-6. The width of the debug output text box is 100%, and a progress bar is added below it. Remove the status element in the middle.
-
-7. The debug output text box has a fixed initial width; the progress bar displays progress text prompts in the middle. Add copyright information: "Copyright © Nanjing Duchang Information Technology Co., Ltd."
-
-8. The final generated Base64 string in JS does not wrap automatically after 128 characters. 2. Program error: BlazorWASMPackage.html:260 Error processing file dotnet.wasm: Maximum call stack size exceeded, this file will be skipped
-   processAndDownload @ BlazorWASMPackage.html:260
-   BlazorWASMPackage.html:260 Error processing file icudt_CJK.dat: Maximum call stack size exceeded, this file will be skipped
-   The width of debugOutput should be 100%, and the Base64 string in the finally generated JS must wrap automatically after 128 characters.
-   It has nothing to do with .csproj; modify the JS in the HTML to ensure that the Base64 string in the finally generated JS wraps automatically after 128 characters.
-
-9. Modify `uint8ArrayToBase64()`, convert every 32 bytes here, then add a line break and carriage return character, and directly generate a BASE64 string with line breaks here. The progress bar text is left-aligned.
-
-10. In `uint8ArrayToBase64()`, each group of bytes is 129 to avoid mismatched Base64 conversion lengths.
-
-11. Do not use JSON intermediate format conversion; directly concatenate to generate JS strings.
-
-12. For Base64 string output, use the \` \` format to avoid `\n` escape characters, and output the Base64 string with line breaks directly in JS.
-
-13. All byte lengths here are formatted for output, using KB and MB units according to the size. Accurate to two decimal places.
-    Include `blazor.boot.json` in the packaging. Use the maximum compression ratio for GZIP. Add a manual click download link in the summary report. Reset the progress bar after processing is completed. Adjust the color of the progress bar; the blue background with black text is unclear.
-
-14. The generated JS file name uses the `entryAssembly` value under bool.json plus the suffix ".published.js".
-
-15. Files with empty hashes cannot be skipped; all files must be processed unconditionally.
-
-16. Add a multi-line text box to allow users to enter several JS file names, then during packaging, read these JS files in the `_framework` directory, merge them into one `Merge.js`, and participate in the packaging. If not specified by the user, `Merge.js` will not be generated.
-
-17. The JS listed in boot.json must be packaged compulsorily and not merged into merge.js. The text box is for users to enter custom script .js file names. In addition, the first line of the finally generated js file must display the current date and time.
-
-18. Add a checkbox to allow users to choose whether to delete comments and meaningless spaces in mergs.js.
-
-19. Add a single-line text box for entering a custom final JS file name; if empty, the default file name is used.
-
-20. Simplify the debug output text; by default, do not minify merge.js spaces and comments. Ensure that the merge.js minification result is correct.
-
-21. For strings in JS, take into account multi-line strings like \` \`, and regular expressions that may appear in JS code; they must not be damaged.
-
-In this way, I used AI to create the initial version, then made subsequent modifications manually. Finally, the current version was formed.
 
 
 ## Copyright Statement
@@ -242,6 +245,40 @@ This software is copyrighted by Nanjing Duchang Information Technology Co., Ltd.
    - 支持微前端架构（MicroApp/ QianKun）的环境适配
    - 便于版本管理和缓存策略实施
 
+## 我是如何开发这个软件的?
+  我是借助于豆包AI（www.doubao.com）开发的，首先我使用了以下提示词一步步的创建这个HTML文件的主体：
+1. 生成一个HTML页面，包含JS代码，实现以下功能：
+1.解析当前路径下的 _framework/blazor.boot.json 文件，解析其中的 resources/runtime|assembly|runtimeAssets|pdb节点下的属性名。
+2.以这个属性名来当做文件名，然后下载这些文件，获得二进制内容，使用GZIP压缩，然后转换为base64字符串。base64字符串换行，每行128个字符。
+3.创建一个新字符串，采用JavaScript格式。然后定义“window.__DCFileContents = {"文件名":"base64字符串"}”
+4.界面上提供一个“下载”按钮，以js的minitype加载生成的js字符串。
+2. 不要使用pako，直接使用浏览器内置的GZIP模块
+3. 这是一个blazor wasm的程序打包器，修改HTML的文字说明
+4. base64字符串不能太长，128个字符就自动换行，而且输出文本时自动追加显示的最下面的。每次生成前先清空调试输出文本的界面，然后调试输出文本开始追加显示。
+5. 不要输出base64 的内容预览，去掉中的当前调试文本，只保留下方的调试文本追加方式输出。
+6. 调试输出文本框宽度为100%，下方添加一个进度条。中间的 status元素去掉。
+7. 调试输出文本框有个初始化的固定宽度，进度条中间显示进度文本提示信息。添加版权信息“南京都昌信息科技有限公司版权所有".
+8. 最终生成的base64字符串没有128个字符自动换行，2.程序报错 BlazorWASMPackage.html:260 处理文件 dotnet.wasm 时出错: Maximum call stack size exceeded，将跳过该文件
+processAndDownload @ BlazorWASMPackage.html:260
+BlazorWASMPackage.html:260 处理文件 icudt_CJK.dat 时出错: Maximum call stack size exceeded，将跳过该文件
+debugOutput的宽度要100%，最终生成的JS中的base64字符串没有128个字符自动换行
+和.csproj没有关系，修改HTML中的JS，确保最终生成的js中的base64字符串是128个字符自动换行
+9. 修改uint8ArrayToBase64()，在这里每32个字节进行一次转换，然后添加换行回车符，在这里面直接生成带换行的BASE64字符串，进度条文本左对齐。
+10. uint8ArrayToBase64()里面，每组字节是129个，避免base64转换长度不匹配
+11. 不要使用json中间格式转换，直接拼接生成JS字符串。
+12. 对于base64字符串输出采用 \` \` 格式，避免\n转移字符，JS中直接输出换行的BASE64字符串。
+13. 这里的字节长度都格式化输出，按照大小输出KB,MB单位。精确到小数点后2位。
+打包时把 blazor.boot.json也包含进去。GZIP采用最大压缩比率。总结报告中添加手动点击下载链接。处理完成后进度条重置。进度条颜色调整一下，蓝色背景黑字看不清楚。
+14. 生成的JS文件名采用 bool.json下面的 entryAssembly数值加上 ".published.js"后缀。
+15. 不能跳过hash为空的文件，要无条件处理所有的文件。
+16. 放一个多行文本框，让用户输入几个JS文件名，然后打包时，将_framework目录下这些JS文件读取出来，合并成一个Merge.js，并参与打包。如果用户未指定，则不生成Merge.js
+17. boot.json里面列出的js是要强制打包的，不是合并到merge.js中。文本框中是让用户输入自定义脚本.js文件名。另外最终生成的js文件第一行要显示当前日期和时间。
+18. 添加一个勾选框，让用户选择是否删除mergs.js中的注释和无意义的空格。
+19. 放一个单行文本框，用于输入自定义的最终JS文件名，如果为空则采用默认的文件名。
+20. 简化调试输出文本，默认不精简merge.js空格和注释。要确保merge.js精简结果是正确的。
+21. JS中的字符串要考虑到 \`  \` 这种多行字符串，还有JS代码中会出现正则表达式，也不能破坏掉。
+
+  这样我用AI创建了初步版本，然后我手动进行后续修改。最终形成了现在的版本。
 
 ## 代码执行过程
 
@@ -350,40 +387,5 @@ This software is copyrighted by Nanjing Duchang Information Technology Co., Ltd.
    - 针对 .NET 8/9 版本的 runtime 做适配处理
    - 自定义 JS 精简保留关键语法结构（模板字符串、正则表达式）
    
-## 我是如何开发这个软件的
-  我是借助于豆包AI（www.doubao.com）开发的，首先我使用了以下提示词一步步的创建这个HTML文件的主体：
-1. 生成一个HTML页面，包含JS代码，实现以下功能：
-1.解析当前路径下的 _framework/blazor.boot.json 文件，解析其中的 resources/runtime|assembly|runtimeAssets|pdb节点下的属性名。
-2.以这个属性名来当做文件名，然后下载这些文件，获得二进制内容，使用GZIP压缩，然后转换为base64字符串。base64字符串换行，每行128个字符。
-3.创建一个新字符串，采用JavaScript格式。然后定义“window.__DCFileContents = {"文件名":"base64字符串"}”
-4.界面上提供一个“下载”按钮，以js的minitype加载生成的js字符串。
-2. 不要使用pako，直接使用浏览器内置的GZIP模块
-3. 这是一个blazor wasm的程序打包器，修改HTML的文字说明
-4. base64字符串不能太长，128个字符就自动换行，而且输出文本时自动追加显示的最下面的。每次生成前先清空调试输出文本的界面，然后调试输出文本开始追加显示。
-5. 不要输出base64 的内容预览，去掉中的当前调试文本，只保留下方的调试文本追加方式输出。
-6. 调试输出文本框宽度为100%，下方添加一个进度条。中间的 status元素去掉。
-7. 调试输出文本框有个初始化的固定宽度，进度条中间显示进度文本提示信息。添加版权信息“南京都昌信息科技有限公司版权所有".
-8. 最终生成的base64字符串没有128个字符自动换行，2.程序报错 BlazorWASMPackage.html:260 处理文件 dotnet.wasm 时出错: Maximum call stack size exceeded，将跳过该文件
-processAndDownload @ BlazorWASMPackage.html:260
-BlazorWASMPackage.html:260 处理文件 icudt_CJK.dat 时出错: Maximum call stack size exceeded，将跳过该文件
-debugOutput的宽度要100%，最终生成的JS中的base64字符串没有128个字符自动换行
-和.csproj没有关系，修改HTML中的JS，确保最终生成的js中的base64字符串是128个字符自动换行
-9. 修改uint8ArrayToBase64()，在这里每32个字节进行一次转换，然后添加换行回车符，在这里面直接生成带换行的BASE64字符串，进度条文本左对齐。
-10. uint8ArrayToBase64()里面，每组字节是129个，避免base64转换长度不匹配
-11. 不要使用json中间格式转换，直接拼接生成JS字符串。
-12. 对于base64字符串输出采用 \` \` 格式，避免\n转移字符，JS中直接输出换行的BASE64字符串。
-13. 这里的字节长度都格式化输出，按照大小输出KB,MB单位。精确到小数点后2位。
-打包时把 blazor.boot.json也包含进去。GZIP采用最大压缩比率。总结报告中添加手动点击下载链接。处理完成后进度条重置。进度条颜色调整一下，蓝色背景黑字看不清楚。
-14. 生成的JS文件名采用 bool.json下面的 entryAssembly数值加上 ".published.js"后缀。
-15. 不能跳过hash为空的文件，要无条件处理所有的文件。
-16. 放一个多行文本框，让用户输入几个JS文件名，然后打包时，将_framework目录下这些JS文件读取出来，合并成一个Merge.js，并参与打包。如果用户未指定，则不生成Merge.js
-17. boot.json里面列出的js是要强制打包的，不是合并到merge.js中。文本框中是让用户输入自定义脚本.js文件名。另外最终生成的js文件第一行要显示当前日期和时间。
-18. 添加一个勾选框，让用户选择是否删除mergs.js中的注释和无意义的空格。
-19. 放一个单行文本框，用于输入自定义的最终JS文件名，如果为空则采用默认的文件名。
-20. 简化调试输出文本，默认不精简merge.js空格和注释。要确保merge.js精简结果是正确的。
-21. JS中的字符串要考虑到 \`  \` 这种多行字符串，还有JS代码中会出现正则表达式，也不能破坏掉。
-
-  这样我用AI创建了初步版本，然后我手动进行后续修改。最终形成了现在的版本。
-
 ## 版权声明
   本软件版权归南京都昌信息科技有限公司所有。
