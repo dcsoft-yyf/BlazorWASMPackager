@@ -175,7 +175,7 @@ I developed this software with the help of Doubao AI (www.doubao.com). First, I 
 
 11. Do not use JSON intermediate format conversion; directly concatenate to generate JS strings.
 
-12. For Base64 string output, use the `` ` ` `` format to avoid `\n` escape characters, and output the Base64 string with line breaks directly in JS.
+12. For Base64 string output, use the \` \` format to avoid `\n` escape characters, and output the Base64 string with line breaks directly in JS.
 
 13. All byte lengths here are formatted for output, using KB and MB units according to the size. Accurate to two decimal places.
     Include `blazor.boot.json` in the packaging. Use the maximum compression ratio for GZIP. Add a manual click download link in the summary report. Reset the progress bar after processing is completed. Adjust the color of the progress bar; the blue background with black text is unclear.
@@ -194,7 +194,7 @@ I developed this software with the help of Doubao AI (www.doubao.com). First, I 
 
 20. Simplify the debug output text; by default, do not minify merge.js spaces and comments. Ensure that the merge.js minification result is correct.
 
-21. For strings in JS, take into account multi-line strings like `` ` ` ` ` ` `, and regular expressions that may appear in JS code; they must not be damaged.
+21. For strings in JS, take into account multi-line strings like \` \`, and regular expressions that may appear in JS code; they must not be damaged.
 
 In this way, I used AI to create the initial version, then made subsequent modifications manually. Finally, the current version was formed.
 
