@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -72,6 +72,7 @@
             width: 16px;
             height: 16px;
         }
+
         #removeImportMergeJs {
             margin-right: 8px;
             width: 16px;
@@ -218,7 +219,7 @@
     <!-- 输出文件名输入区域 -->
     <div class="output-filename-container">
         <label for="outputFileNameInput">最终生成的JS文件名：</label>
-        <input type="text" id="outputFileNameInput"  placeholder="例如：MyApp.published.js">
+        <input type="text" id="outputFileNameInput" placeholder="例如：MyApp.published.js">
         <div class="filename-hint">提示：留空将使用默认文件名（entryAssembly值 + .published.js）。请确保包含.js扩展名。</div>
     </div>
 
@@ -227,8 +228,33 @@
         <label for="mergeFilesInput">需要合并的自定义JS文件（每行一个，相对于_framework目录）：</label>
         <textarea id="mergeFilesInput" placeholder="例如：
 custom-script-1.js
-scripts/custom-script-2.js"></textarea>
-
+scripts/custom-script-2.js">
+</textarea>
+        <!--
+    DCTools20221228.js
+    PageContentDrawer.js
+    WriterControl_API.js
+    WriterControl_CalculateControl.js
+    WriterControl_DateTimeControl.js
+    WriterControl_Dialog.js
+    WriterControl_DialogStaticResources.js
+    WriterControl_DOMPackage.js
+    WriterControl_DrawD3.js
+    WriterControl_DrawFu.js
+    WriterControl_EF.js
+    WriterControl_Event.js
+    WriterControl_FontList.js
+    WriterControl_IO.js
+    WriterControl_KnowledgeBase.js
+    WriterControl_ListBoxControl.js
+    WriterControl_Paint.js
+    WriterControl_Print.js
+    WriterControl_QueryListTableControl.js
+    WriterControl_Rule.js
+    WriterControl_Task.js
+    WriterControl_ToolBar.js
+    WriterControl_UI.js
+    WriterControl_Main.js -->
         <div class="minify-option">
             <input type="checkbox" id="minifyMergeJs">
             <label for="minifyMergeJs">合并自定义脚本时删除注释和无意义空格（处理模板字符串和正则表达式）</label>
@@ -309,76 +335,180 @@ scripts/custom-script-2.js"></textarea>
             updateProgress(0, '准备就绪');
         }
 
-        /**
-         * 增强版JS代码压缩：保护模板字符串和正则表达式
-         */
-        function minifyJs(code) {
-            // 存储需要保护的内容：模板字符串、正则表达式
-            const protectedSegments = [];
-            let tempCode = code;
-            let segmentIndex = 0;
+        function CleanJavaScriptCode(strJSContent, removeComment, removeImport) {
+            // 子函数：判断是否是正则表达式的开始
+            function isStartOfRegex(code, pos) {
+                // 检查当前位置是否可能是正则表达式的开始
+                // 通过向前查找，看是否在运算符之后
+                let i = pos - 1;
+                while (i >= 0 && /\s/.test(code[i])) {
+                    i--;
+                }
 
-            // 匹配模板字符串 `...`，支持嵌套的`（通过转义符\`）
-            const templateStringRegex = /`(?:\\`|[^`])*`/g;
-            tempCode = tempCode.replace(templateStringRegex, (match) => {
-                const index = segmentIndex++;
-                protectedSegments.push({ type: 'template', content: match });
-                return `__PROTECTED_${index}__`;
-            });
+                if (i < 0) return true; // 如果是开头，则可能是正则
 
-            // 匹配正则表达式，需要避免在除以运算符/和其他上下文误判
-            // 这个正则表达式会匹配典型的正则表达式字面量
-            const regexLiteralRegex = /(?<![=<>!*/]|\/{2,})\/(?:\\\/|[^/])+\/[gimuy]*/g;
-            tempCode = tempCode.replace(regexLiteralRegex, (match) => {
-                const index = segmentIndex++;
-                protectedSegments.push({ type: 'regex', content: match });
-                return `__PROTECTED_${index}__`;
-            });
+                const prevChar = code[i];
 
-            // 匹配单引号和双引号字符串
-            const stringLiteralRegex = /(["'])(\\.|[^\\\1])*\1/g;
-            tempCode = tempCode.replace(stringLiteralRegex, (match) => {
-                const index = segmentIndex++;
-                protectedSegments.push({ type: 'string', content: match });
-                return `__PROTECTED_${index}__`;
-            });
+                // 如果前一个字符是这些运算符，则很可能是正则表达式
+                const regexStarters = ['(', '=', ',', '[', '!', '&', '|', '?', ':', ';', '{', '}', '~', '*'];
+                if (regexStarters.includes(prevChar)) {
+                    return true;
+                }
 
-            // 移除单行注释
-            let minified = tempCode.replace(/\/\/.*$/gm, '');
+                // 检查是否是关键字后（如 return, typeof 等）
+                const keywordCheck = code.substring(0, i + 1);
+                const keywords = ['return', 'typeof', 'instanceof', 'new', 'delete', 'void', 'yield'];
 
-            // 移除多行注释
-            minified = minified.replace(/\/\*[\s\S]*?\*\//g, '');
+                for (const keyword of keywords) {
+                    const keywordPos = keywordCheck.lastIndexOf(keyword);
+                    if (keywordPos >= 0) {
+                        const afterKeyword = keywordCheck.substring(keywordPos + keyword.length, i + 1).trim();
+                        if (afterKeyword === '') {
+                            return true;
+                        }
+                    }
+                }
 
-            // 处理空格和换行
-            minified = minified
-                .replace(/^\s+|\s+$/gm, '')  // 移除行首行尾空格
-                .replace(/\n+/g, '\n')       // 合并多个空行为一个
-                .replace(/^\n/gm, '')        // 移除空行
-                .replace(/\s+/g, ' ');       // 压缩空格
+                // 如果是其他情况（如变量名后），则不是正则
+                if (/[a-zA-Z0-9_$]/.test(prevChar)) {
+                    return false;
+                }
 
-            // 恢复受保护的片段
-            minified = minified.replace(/__PROTECTED_(\d+)__/g, (match, index) => {
-                return protectedSegments[parseInt(index, 10)].content;
-            });
+                return true;
+            }
 
-            // 安全处理运算符周围的空格
-            const operators = [
-                ';', '{', '}', '(', ')', ',', '=', '+', '-', '*', '/',
-                '==', '===', '!', '!=', '!==', '&&', '||', '>', '>=', '<', '<='
-            ];
+            // 子函数：找到正则表达式的结束位置
+            function findRegexEnd(code, startPos) {
+                let i = startPos + 1; // 跳过起始的 /
 
-            // 按运算符长度排序，确保较长的运算符先被处理
-            operators.sort((a, b) => b.length - a.length);
+                while (i < code.length) {
+                    const char = code[i];
 
-            operators.forEach(op => {
-                // 转义特殊字符
-                const escapedOp = op.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // 处理运算符周围的空格，但不影响正则表达式和模板字符串
-                minified = minified.replace(new RegExp(`\\s*${escapedOp}\\s*`, 'g'), op);
-            });
+                    if (char === '\\') {
+                        // 跳过转义字符
+                        i += 2;
+                        continue;
+                    }
 
-            return minified.trim();
+                    if (char === '/') {
+                        // 找到正则表达式的结束
+                        i++;
+                        // 检查是否有修饰符
+                        while (i < code.length && /[gimysu]/.test(code[i])) {
+                            i++;
+                        }
+                        return i;
+                    }
+
+                    i++;
+                }
+
+                // 如果没有找到结束，返回原位置
+                return startPos;
+            }
+
+            let result = strJSContent;
+
+            // 处理 import 语句
+            if (removeImport === true) {
+                // 匹配各种 import 语句格式
+                result = result.replace(/^\s*import\s+.*?from\s+["'][^"']*["']\s*;?\s*$/gm, '');
+                result = result.replace(/^\s*import\s+["'][^"']*["']\s*;?\s*$/gm, '');
+                result = result.replace(/^\s*import\s+\{.*?\}\s+from\s+["'][^"']*["']\s*;?\s*$/gm, '');
+                result = result.replace(/^\s*import\s+\*\s+as\s+\w+\s+from\s+["'][^"']*["']\s*;?\s*$/gm, '');
+            }
+
+            if (removeComment === true) {
+                let cleanedCode = '';
+                let i = 0;
+                const len = result.length;
+
+                while (i < len) {
+                    const char = result[i];
+                    const nextChar = i < len - 1 ? result[i + 1] : '';
+
+                    // 检查是否在字符串中
+                    if (char === '"' || char === "'" || char === '`') {
+                        const quote = char;
+                        cleanedCode += char;
+                        i++;
+
+                        // 处理字符串内容，包括转义字符
+                        while (i < len) {
+                            const currentChar = result[i];
+                            cleanedCode += currentChar;
+
+                            if (currentChar === '\\') {
+                                // 跳过转义字符
+                                i++;
+                                if (i < len) {
+                                    cleanedCode += result[i];
+                                }
+                            } else if (currentChar === quote) {
+                                // 找到字符串结束
+                                i++;
+                                break;
+                            }
+                            i++;
+                        }
+                        continue;
+                    }
+
+                    if (char === '/') {
+                        // 检查是否是正则表达式
+                        const isRegex = isStartOfRegex(result, i);
+
+                        if (isRegex) {
+                            const regexEnd = findRegexEnd(result, i);
+                            cleanedCode += result.substring(i, regexEnd);
+                            i = regexEnd;
+                            continue;
+                        }
+                    }
+
+                    // 检查注释
+                    if (char === '/' && nextChar === '/') {
+                        // 单行注释
+                        i += 2;
+                        while (i < len && result[i] !== '\n') {
+                            i++;
+                        }
+                        // 保留换行符
+                        if (i < len) {
+                            cleanedCode += result[i];
+                            i++;
+                        }
+                        continue;
+                    }
+
+                    if (char === '/' && nextChar === '*') {
+                        // 多行注释
+                        i += 2;
+                        while (i < len - 1 && !(result[i] === '*' && result[i + 1] === '/')) {
+                            i++;
+                        }
+                        if (i < len - 1) {
+                            i += 2;
+                        }
+                        continue;
+                    }
+
+                    // 普通字符
+                    cleanedCode += char;
+                    i++;
+                }
+
+                // 移除多余的空行和前后空格
+                result = cleanedCode
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line !== '')
+                    .join('\n');
+            }
+
+            return result;
         }
+
 
         /**
          * 使用最大压缩级别进行GZIP压缩
@@ -463,7 +593,8 @@ scripts/custom-script-2.js"></textarea>
             }
 
             // 获取是否需要压缩的选项
-            const shouldMinify = minifyMergeJs.checked;
+            const shouldMinify = document.getElementById('minifyMergeJs').checked;
+            const shouldRemoveImportMergeJs = document.getElementById("removeImportMergeJs").checked;
             logDebugMessage(`处理 ${filenames.length} 个自定义JS文件: ${filenames.join(', ')} ${shouldMinify ? '(将精简代码)' : ''}`);
 
             // 下载并合并所有指定的JS文件
@@ -485,8 +616,8 @@ scripts/custom-script-2.js"></textarea>
                     originalMergedSize += originalFileSize;
 
                     // 如果需要压缩，处理单个文件内容
-                    if (shouldMinify) {
-                        const minifiedContent = minifyJs(content);
+                    if (shouldMinify === true || shouldRemoveImportMergeJs === true) {
+                        const minifiedContent = CleanJavaScriptCode(content, shouldMinify, shouldRemoveImportMergeJs);
                         content = minifiedContent;
                     }
 
@@ -515,6 +646,17 @@ scripts/custom-script-2.js"></textarea>
                 finalContent = minifyJs(finalContent);
                 logDebugMessage(`自定义脚本已精简，原始大小: ${formatBytes(originalMergedSize)}, 精简后: ${formatBytes(new TextEncoder().encode(finalContent).length)}`);
             }
+
+            /*
+               const blob3 = new Blob([finalContent], { type: 'application/javascript' });
+               blobUrl3 = URL.createObjectURL(blob3);
+               const a = document.createElement('a');
+               a.href = blobUrl3;
+               a.download = "merge.js";
+               document.body.appendChild(a);
+               a.click();
+               document.body.removeChild(a);*/
+
 
             // 压缩合并后的内容
             const mergedUint8 = new TextEncoder().encode(finalContent);
@@ -613,7 +755,7 @@ scripts/custom-script-2.js"></textarea>
                     }
                 });
                 if (bootJson.appsettings) {
-                    for(var item4 of bootJson.appsettings) {
+                    for (var item4 of bootJson.appsettings) {
                         filesToProcess.push(item4);
                     }
                 }
@@ -666,18 +808,6 @@ scripts/custom-script-2.js"></textarea>
                                 intRuntimeVersion = 8;
                             }
                         }
-                        //if (filename == "dotnet.js") {
-                        //    var strText = new TextDecoder().decode(uint8Array);
-                        //    var strFlags = "qe.locateFile=e=>";
-                        //    var index45 = strText.indexOf(strFlags);
-                        //    if (index45 > 0) {
-                        //        var strText2 = strText.replaceAll(strFlags, "qe.locateFile=e=>e,qe.zzzz=e=>");
-                        //        var ssstt = strText == strText2;
-                        //        var index456 = strText2.indexOf(strFlags);
-                        //        var arr45 = new TextEncoder().encode(strText2);
-                        //        uint8Array = arr45;
-                        //    }
-                        //}
                         const fileSize = uint8Array.length;
                         originalTotalBytes += fileSize;
 
@@ -710,9 +840,16 @@ scripts/custom-script-2.js"></textarea>
                 const dateTimeStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 
                 // 构建JS内容，第一行为日期时间注释
-                let jsContent = `// Gen at ${dateTimeStr}\n by https://github.com/dcsoft-yyf/BlazorWASMPackager`;
-                jsContent += '\n"use strict";\n window.__DCAllFileContents20251024 = {\n';
-
+                let jsContent = `// Gen at ${dateTimeStr} by https://github.com/dcsoft-yyf/BlazorWASMPackager
+"use strict";
+(async function () {
+        if (window.__DCWriter5Started == true) {
+            // 避免重复调用
+            return;
+        }
+        window.__DCWriter5Started = true;
+        var allFileContents = {
+                    `;
                 fileEntries.forEach((entry, index) => {
                     const isLastEntry = index === fileEntries.length - 1;
                     const key = escapeJsKey(entry.filename);
@@ -722,192 +859,185 @@ scripts/custom-script-2.js"></textarea>
 
                 jsContent += '};';
                 jsContent += `
-(async function () {
-    if (window.__DCWriter5Started == true) {
-        // 避免重复调用
-        return;
-    }
-    var allFileContents = window.__DCAllFileContents20251024; window.__DCAllFileContents20251024 = null;
-    window.__DCWriter5Started = true;
-    // 获得资源基础路径
-    var bolDebugMode = false;
-    function ConverToBoolean(strValue, bolDefaultValue) {
-        if (strValue == null || strValue.length == 0) return bolDefaultValue;
-        strValue = strValue.trim().toLowerCase();
-        if (strValue == "true") return true;
-        if (strValue == "false") return false;
-        return bolDefaultValue;
-    };
-    if (document.currentScript != null) {
-        //debugger;
-        bolDebugMode = ConverToBoolean(document.currentScript.getAttribute("debugmode"), false);
-    }
-    function GetFileExt( strFileName ){
-        var index345 = strFileName.lastIndexOf('.');
-        if (index345 > 0) {
-            return strFileName.substring(index345).trim().toLowerCase();
-        }
-        return null;
-    };
-    var jsScript = document.createElement("script");
-    jsScript.setAttribute("language", "javascript");
-    jsScript.src = "_framework/blazor.webassembly.js";
-    var strEnvironment = null;
-    var mapBase64BlobUrl = {};
-    if (window.DecompressionStream && allFileContents != null) {
-        function StartsWith( strText , strHeader ){
-            return strText.length >= strHeader.length
-                && strText.substring( 0 , strHeader.length) == strHeader;
+        // 获得资源基础路径
+        var bolDebugMode = false;
+        function ConverToBoolean(strValue, bolDefaultValue) {
+            if (strValue == null || strValue.length == 0) return bolDefaultValue;
+            strValue = strValue.trim().toLowerCase();
+            if (strValue == "true") return true;
+            if (strValue == "false") return false;
+            return bolDefaultValue;
         };
-        // 启用本地Base64资源
-        /** 将一个Base64字符串转换为字节数组后GZIP解压缩并返回一个内部下载URL地址*/
-        async function Base64ToBlobUrl(strBase64String, strFileName) {
-            try {
-                const binaryStr = atob(strBase64String);
-                const uint8Array = new Uint8Array(binaryStr.length);
-                for (let i = binaryStr.length - 1; i >= 0; i--) {
-                    uint8Array[i] = binaryStr.charCodeAt(i);
-                }
-                //const uint8Array = new TextEncoder().encode(binaryStr);
-                const sourceStream = new Blob([uint8Array]).stream();
-                const decompressedStream = sourceStream.pipeThrough(
-                    new DecompressionStream('gzip')
-                );
-                const blob = await new Response(decompressedStream).blob();
-                var strMimeType = "application/x-msdownload";
-                if (strFileName != null) {
-                    var strExt = GetFileExt( strFileName );
-                    switch (strExt) {
-                        case ".js": strMimeType = "application/javascript"; break;
-                        case ".json": strMimeType = "application/json"; break;
-                        case ".wasm": strMimeType = "application/wasm"; break;
-                        case ".blat": strMimeType = "application/octet-stream"; break;
-                        case ".dat": strMimeType = "application/octet-stream"; break;
-                        case ".dll": strMimeType = "application/x-msdownload"; break;
+        if (document.currentScript != null) {
+            //debugger;
+            bolDebugMode = ConverToBoolean(document.currentScript.getAttribute("debugmode"), false);
+        }
+        function GetFileExt( strFileName ){
+            var index345 = strFileName.lastIndexOf('.');
+            if (index345 > 0) {
+                return strFileName.substring(index345).trim().toLowerCase();
+            }
+            return null;
+        };
+        var jsScript = document.createElement("script");
+        jsScript.setAttribute("language", "javascript");
+        jsScript.src = "_framework/blazor.webassembly.js";
+        var strEnvironment = null;
+        var mapBase64BlobUrl = {};
+        if (window.DecompressionStream && allFileContents != null) {
+            function StartsWith( strText , strHeader ){
+                return strText.length >= strHeader.length
+                    && strText.substring( 0 , strHeader.length) == strHeader;
+            };
+            // 启用本地Base64资源
+            /** 将一个Base64字符串转换为字节数组后GZIP解压缩并返回一个内部下载URL地址*/
+            async function Base64ToBlobUrl(strBase64String, strFileName) {
+                try {
+                    const binaryStr = atob(strBase64String);
+                    const uint8Array = new Uint8Array(binaryStr.length);
+                    for (let i = binaryStr.length - 1; i >= 0; i--) {
+                        uint8Array[i] = binaryStr.charCodeAt(i);
                     }
-                }
-                const typedBlob = new Blob([blob], { type: strMimeType });
-                const blobUrl = URL.createObjectURL(typedBlob);
-                return blobUrl;
-            } catch (error) {
-                console.error('转换失败:', error);
-                throw error;
-            }
-        }
-        for (var key in allFileContents) {
-            var strUrl44 = await Base64ToBlobUrl(allFileContents[key], key);
-            if (strUrl44 != null && strUrl44.length > 0) {
-                mapBase64BlobUrl[key] = strUrl44;
-                if (key == "Merge.js") {
-                    strEnvironment = strUrl44;
-                }
-                else if (key == "blazor.webassembly.js") {
-                    jsScript.src = strUrl44;
-                }
-            }
-        }
-    }
-    var myOriginalURL = null;
-    `;
-                if (intRuntimeVersion == 9) {
-                    jsContent += `
-    myOriginalURL = globalThis.URL || window.URL;
-    var newURL = function(strUrl , strBase){
-        this.toString = function () {
-            return this.href;
-        };
-        if(strBase == null || strBase.length == 0 ){
-            this.href = strUrl;
-            return;
-        }
-        if (strUrl.length > 5 && strUrl.substring(0, 5) == "blob:") {
-            this.href = strUrl;
-            return;
-        }
-        if (strUrl == "./blazor.boot.json") {
-            var strUrl4 = mapBase64BlobUrl["blazor.boot.json"];
-            if (strUrl4 != null && strUrl4.length > 0) {
-                this.href = strUrl4;
-                //globalThis.URL = myOriginalURL;
-                return;
-            }
-        }
-        if (strBase.length > 5 && strBase.substring( 0 , 5 ) == "blob:")
-        {
-            var strUrl5 = mapBase64BlobUrl[ strUrl];
-            if (strUrl5 != null && strUrl5.length > 0 )
-            {
-                this.href = strUrl5;
-            }
-            return;
-        }
-        if (GetFileExt( strUrl ) == ".js")
-        {
-            var strUrl2 = mapBase64BlobUrl[strUrl];
-            if (strUrl2 != null && strUrl2.length > 0) {
-                this.href = strUrl2;
-                return;
-            }
-        }
-        return new myOriginalURL( strUrl , strBase);
-    };
-    globalThis.URL = newURL;`;
-                }
-                jsContent += `
-    allFileContents = null;
-    jsScript.setAttribute("autostart", "false");
-    jsScript.onload = function () {
-        Blazor.start({
-            environment: strEnvironment,
-            loadBootResource: function (type, name, defaultUri, integrity) {
-                if (name == 'blazor.boot.json') {
-                    //对微前端框架MicroApp的支持
-                    if (window.__MICRO_APP_WINDOW__) {
-                        __MICRO_APP_WINDOW__.document.defaultView.Blazor = window.Blazor;
-                        __MICRO_APP_WINDOW__.document.defaultView.DotNet = window.DotNet;
-                        if (window.rawWindow) {
-                            window.rawWindow.Blazor = window.Blazor;
-                            window.rawWindow.DotNet = window.DotNet;
+                    //const uint8Array = new TextEncoder().encode(binaryStr);
+                    const sourceStream = new Blob([uint8Array]).stream();
+                    const decompressedStream = sourceStream.pipeThrough(
+                        new DecompressionStream('gzip')
+                    );
+                    const blob = await new Response(decompressedStream).blob();
+                    var strMimeType = "application/x-msdownload";
+                    if (strFileName != null) {
+                        var strExt = GetFileExt( strFileName );
+                        switch (strExt) {
+                            case ".js": strMimeType = "application/javascript"; break;
+                            case ".json": strMimeType = "application/json"; break;
+                            case ".wasm": strMimeType = "application/wasm"; break;
+                            case ".blat": strMimeType = "application/octet-stream"; break;
+                            case ".dat": strMimeType = "application/octet-stream"; break;
+                            case ".dll": strMimeType = "application/x-msdownload"; break;
                         }
                     }
+                    const typedBlob = new Blob([blob], { type: strMimeType });
+                    const blobUrl = URL.createObjectURL(typedBlob);
+                    return blobUrl;
+                } catch (error) {
+                    console.error('转换失败:', error);
+                    throw error;
                 }
-                //对微前端框架QianKun的支持
-                if (window.__POWERED_BY_QIANKUN__) {
-                    window.document.defaultView.Blazor = window.Blazor;
-                    window.document.defaultView.DotNet = window.DotNet;
-                }
-                //if (GetFileExt( name ) == ".js") return '_framework/' + name;
-                // 启用本地Base64资源
-                var localUrl = mapBase64BlobUrl[name];
-                if (localUrl != null && localUrl.length > 0) {
-                    if (bolDebugMode == true) {
-                        console.log("Load resource:" + name + "=>" + localUrl);
+            }
+            for (var key in allFileContents) {
+                var strUrl44 = await Base64ToBlobUrl(allFileContents[key], key);
+                if (strUrl44 != null && strUrl44.length > 0) {
+                    mapBase64BlobUrl[key] = strUrl44;
+                    if (key == "Merge.js") {
+                        strEnvironment = strUrl44;
                     }
-                    return localUrl;
-                }
-                return name;
-            }
-        }).then(function () {
-            // 释放 mapBase64BlobUrl
-            for (var key in mapBase64BlobUrl) {
-                var strUrl555 = mapBase64BlobUrl[key];
-                if (myOriginalURL == null ){
-                    URL.revokeObjectURL(strUrl555);
-                }
-                else{
-                    myOriginalURL.revokeObjectURL(strUrl555);
+                    else if (key == "blazor.webassembly.js") {
+                        jsScript.src = strUrl44;
+                    }
                 }
             }
-            mapBase64BlobUrl = null;
-            if (myOriginalURL != null){
-                globalThis.URL = myOriginalURL;
-                myOriginalURL = null;
+        }
+        allFileContents = null;
+        var myOriginalURL = null;
+        `;
+                if (intRuntimeVersion == 9) {
+                    jsContent += `
+        myOriginalURL = globalThis.URL || window.URL;
+        var newURL = function(strUrl , strBase){
+            this.toString = function () {
+                return this.href;
+            };
+            if(strBase == null || strBase.length == 0 ){
+                this.href = strUrl;
+                return;
             }
-        });
-    };
-    document.head.appendChild(jsScript);
+            if (strUrl.length > 5 && strUrl.substring(0, 5) == "blob:") {
+                this.href = strUrl;
+                return;
+            }
+            if (strUrl == "./blazor.boot.json") {
+                var strUrl4 = mapBase64BlobUrl["blazor.boot.json"];
+                if (strUrl4 != null && strUrl4.length > 0) {
+                    this.href = strUrl4;
+                    //globalThis.URL = myOriginalURL;
+                    return;
+                }
+            }
+            if (strBase.length > 5 && strBase.substring( 0 , 5 ) == "blob:")
+            {
+                var strUrl5 = mapBase64BlobUrl[ strUrl];
+                if (strUrl5 != null && strUrl5.length > 0 )
+                {
+                    this.href = strUrl5;
+                }
+                return;
+            }
+            if (GetFileExt( strUrl ) == ".js")
+            {
+                var strUrl2 = mapBase64BlobUrl[strUrl];
+                if (strUrl2 != null && strUrl2.length > 0) {
+                    this.href = strUrl2;
+                    return;
+                }
+            }
+            return new myOriginalURL( strUrl , strBase);
+        };
+        globalThis.URL = newURL;`;
+                }
+                jsContent += `
+        jsScript.setAttribute("autostart", "false");
+        jsScript.onload = function () {
+            Blazor.start({
+                environment: strEnvironment,
+                loadBootResource: function (type, name, defaultUri, integrity) {
+                    if (name == 'blazor.boot.json') {
+                        //对微前端框架MicroApp的支持
+                        if (window.__MICRO_APP_WINDOW__) {
+                            __MICRO_APP_WINDOW__.document.defaultView.Blazor = window.Blazor;
+                            __MICRO_APP_WINDOW__.document.defaultView.DotNet = window.DotNet;
+                            if (window.rawWindow) {
+                                window.rawWindow.Blazor = window.Blazor;
+                                window.rawWindow.DotNet = window.DotNet;
+                            }
+                        }
+                    }
+                    //对微前端框架QianKun的支持
+                    if (window.__POWERED_BY_QIANKUN__) {
+                        window.document.defaultView.Blazor = window.Blazor;
+                        window.document.defaultView.DotNet = window.DotNet;
+                    }
+                    //if (GetFileExt( name ) == ".js") return '_framework/' + name;
+                    // 启用本地Base64资源
+                    var localUrl = mapBase64BlobUrl[name];
+                    if (localUrl != null && localUrl.length > 0) {
+                        if (bolDebugMode == true) {
+                            console.log("Load resource:" + name + "=>" + localUrl);
+                        }
+                        return localUrl;
+                    }
+                    return name;
+                }
+            }).then(function () {
+                // 释放 mapBase64BlobUrl
+                for (var key in mapBase64BlobUrl) {
+                    var strUrl555 = mapBase64BlobUrl[key];
+                    if (myOriginalURL == null ){
+                        URL.revokeObjectURL(strUrl555);
+                    }
+                    else{
+                        myOriginalURL.revokeObjectURL(strUrl555);
+                    }
+                }
+                mapBase64BlobUrl = null;
+                if (myOriginalURL != null){
+                    globalThis.URL = myOriginalURL;
+                    myOriginalURL = null;
+                }
+            });
+        };
+        document.head.appendChild(jsScript);
 })();
-                `;
+                    `;
                 // 计算JS文件大小（UTF-8编码）
                 const encoder = new TextEncoder();
                 const jsUint8Array = encoder.encode(jsContent);
