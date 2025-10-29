@@ -10,7 +10,7 @@ With all due respect to the author's limited knowledge, no tool with similar fun
 
 ## Benefits
 1. **Ease of Use**
-   - This software contains only one file: `BlazorWASMPackager.html`. That's right, just this one HTML file!`BlazorWASMPackager-en.html` is English version.
+   - This software contains only one file: `BlazorWASMPackager.html`. That's right, just one HTML file!`BlazorWASMPackager-en.html` is English version.
    - This HTML file is directly placed in the root directory of the published Blazor WebAssembly program (usually the wwwroot directory) and can be used by opening it with a mainstream browser, without relying on any third-party software.
    - Provides visual progress feedback and detailed processing logs
    - Supports custom output file names and script merging rules
@@ -146,10 +146,10 @@ With all due respect to the author's limited knowledge, no tool with similar fun
 I developed this software with the help of Doubao AI (www.doubao.com). First, I used the following prompts to create the main body of this HTML file step by step:
 
 1. Generate an HTML page with JS code to implement the following functions:
-   1. Parse the `_framework/blazor.boot.json` file in the current path, and parse the attribute names under the `resources/runtime|assembly|runtimeAssets|pdb` nodes in it.
-   2. Use this attribute name as the file name, then download these files, obtain the binary content, compress it using GZIP, and convert it to a Base64 string. Wrap the Base64 string, with 128 characters per line.
-   3. Create a new string in JavaScript format. Then define "window.__DCFileContents = { "file name": "Base64 string" }"
-   4. Provide a "Download" button on the interface to load the generated JS string using the JS MIME type.
+   1.Parse the `_framework/blazor.boot.json` file in the current path, and parse the attribute names under the `resources/runtime|assembly|runtimeAssets|pdb` nodes in it.
+   2.Use this attribute name as the file name, then download these files, obtain the binary content, compress it using GZIP, and convert it to a Base64 string. Wrap the Base64 string, with 128 characters per line.
+   3.Create a new string in JavaScript format. Then define "window.__DCFileContents = { "file name": "Base64 string" }"
+   4.Provide a "Download" button on the interface to load the generated JS string using the JS MIME type.
 
 2. Do not use pako; use the browser's built-in GZIP module directly.
 
