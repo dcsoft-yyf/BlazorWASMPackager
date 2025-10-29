@@ -40,7 +40,7 @@ With all due respect to the author's limited knowledge, no tool with similar fun
    - Facilitates version management and implementation of caching strategies
 
 ## How I Developed This Software?
-I developed this software with the help of Doubao AI (www.doubao.com). First, I used the following prompts to create the main body of this HTML file step by step:
+I developed this software with the help of Doubao AI ( www.doubao.com ). First, I used the following prompts to create the main body of this HTML file step by step:
 
 1. Generate an HTML page with JS code to implement the following functions:
    1.Parse the `_framework/blazor.boot.json` file in the current path, and parse the attribute names under the `resources/runtime|assembly|runtimeAssets|pdb` nodes in it.
@@ -246,7 +246,7 @@ This software is copyrighted by Nanjing Duchang Information Technology Co., Ltd.
    - 便于版本管理和缓存策略实施
 
 ## 我是如何开发这个软件的?
-  我是借助于豆包AI（www.doubao.com）开发的，首先我使用了以下提示词一步步的创建这个HTML文件的主体：
+  我是借助于豆包AI（ www.doubao.com ）开发的，首先我使用了以下提示词一步步的创建这个HTML文件的主体：
 1. 生成一个HTML页面，包含JS代码，实现以下功能：
 1.解析当前路径下的 _framework/blazor.boot.json 文件，解析其中的 resources/runtime|assembly|runtimeAssets|pdb节点下的属性名。
 2.以这个属性名来当做文件名，然后下载这些文件，获得二进制内容，使用GZIP压缩，然后转换为base64字符串。base64字符串换行，每行128个字符。
