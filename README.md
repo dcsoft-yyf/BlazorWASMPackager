@@ -3,9 +3,10 @@
 Blazor WASM Packager can package all Blazor WebAssembly program files, including `js`, `wasm`, `dll`, `json` and other files, into a single JS file after GZIP compression. It greatly simplifies the deployment process, optimizes application loading performance, and enables cross-origin calls for Blazor WASM.
 
 With all due respect to the author's limited knowledge, no tool with similar functions was found, so the decision was made to develop this tool independently.
-## Demo for results
+## Demo for Blazor WASM without `_framework` folder
 
-[https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample](https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample)
+ - [https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample](https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample)
+ - [https://dcsoft-yyf.github.io/DCWriterApp/index.html](https://dcsoft-yyf.github.io/DCWriterApp/index.html)
 
 ## Screen snapshort
 
@@ -14,7 +15,7 @@ With all due respect to the author's limited knowledge, no tool with similar fun
 ## Benefits
 1. **Ease of Use**
    - This software contains only one file: `BlazorWASMPackager.html`. That's right, just one HTML file!`BlazorWASMPackager-en.html` is English version.
-   - This HTML file is directly placed in the root directory of the published Blazor WebAssembly program (usually the wwwroot directory) and can be used by opening it with a mainstream browser, without relying on any third-party software.
+   - This HTML file is directly placed in the root folder of the published Blazor WebAssembly program (usually the `wwwroot` folder) and can be used by opening it with a mainstream browser, without relying on any third-party software.
    - Provides visual progress feedback and detailed processing logs
    - Supports custom output file names and script merging rules
 
@@ -81,7 +82,7 @@ I developed this software with the help of Doubao AI ( www.doubao.com ). First, 
 
 15. Files with empty hashes cannot be skipped; all files must be processed unconditionally.
 
-16. Add a multi-line text box to allow users to enter several JS file names, then during packaging, read these JS files in the `_framework` directory, merge them into one `Merge.js`, and participate in the packaging. If not specified by the user, `Merge.js` will not be generated.
+16. Add a multi-line text box to allow users to enter several JS file names, then during packaging, read these JS files in the `_framework` folder, merge them into one `Merge.js`, and participate in the packaging. If not specified by the user, `Merge.js` will not be generated.
 
 17. The JS listed in boot.json must be packaged compulsorily and not merged into merge.js. The text box is for users to enter custom script .js file names. In addition, the first line of the finally generated js file must display the current date and time.
 
@@ -105,7 +106,7 @@ In this way, I used AI to create the initial version, then made subsequent modif
 
 2. **User Parameter Collection**
    - Reads the content from the output file name input box (uses default naming rules when empty)
-   - Parses the custom JS file list (one path per line, relative to the `_framework` directory)
+   - Parses the custom JS file list (one path per line, relative to the `_framework` folder)
    - Checks the status of the "Minify custom scripts" checkbox (determines whether to remove comments and redundant spaces)
 
 
@@ -220,7 +221,7 @@ This software is copyrighted by Nanjing Duchang Information Technology Co., Ltd.
 
 1. **使用简单**
    - 本软件只有一个`BlazorWASMPackager.html`文件。没错！就一个HTML文件。`BlazorWASMPackager-en.html`是其英文版本。
-   - 这个HTML文件直接放在Blazor WebAssembly程序发布后的根目录下（一般为wwwroot目录下），用主流浏览器打开即可使用，不依赖任何第三方软件。
+   - 这个HTML文件直接放在Blazor WebAssembly程序发布后的根目录下（一般为`wwwroot`目录下），用主流浏览器打开即可使用，不依赖任何第三方软件。
    - 提供可视化进度反馈和详细处理日志
    - 支持自定义输出文件名和脚本合并规则
 
