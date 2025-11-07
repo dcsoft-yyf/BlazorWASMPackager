@@ -1,8 +1,8 @@
 # Blazor WASM Packager
 ## Introduction  [[中文版]](#blazor-wasm-程序打包器)
-Blazor WASM Packager can package all Blazor WebAssembly program files, including `js`, `wasm`, `dll`, `json` and other files, into a single JS file after GZIP compression. It greatly simplifies the deployment process, optimizes application loading performance, and enables cross-origin calls for Blazor WASM.
+ Blazor WASM Packager can package all Blazor WebAssembly program files, including `js`,`wasm`,`dll`,`json`,`dat` and other files, into a single JS file after GZIP compression. It greatly simplifies the deployment process, optimizes application loading performance, and enables cross-origin calls for Blazor WASM.
+<br/> For example, for the Blazor WASM application [[DCWriterApp](https://github.com/dcsoft-yyf/DCWriterApp)], there are contains `61` files totaling `36.5MB`. After packaging, a single JS file is generated with a size of only `15.2MB`, achieving a compression ratio of 41%. Additionally, deploying with this single JS file improves the application's loading speed and avoids cross-origin resource call issues.
 
-With all due respect to the author's limited knowledge, no tool with similar functions was found, so the decision was made to develop this tool independently.
 ## Demo for Blazor WASM without `_framework` folder
 
  - [https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample](https://dcsoft-yyf.github.io/BlazorWASMPackager/demoFiles/BlazorSample)
@@ -214,8 +214,7 @@ This software is copyrighted by Nanjing Duchang Information Technology Co., Ltd.
 ## 简介
 
   Blazor WASM 程序打包器能将 Blazor WebAssembly 所有的程序文件，包括`js`,`wasm`,`dll`,`json`等文件经GZIP压缩打包成单个JS文件，大幅简化部署流程并优化应用加载性能,而且能让Blazor WASM能跨域调用。
-
-  恕作者孤陋寡闻，我没找到类似功能的工具，所以我决定自己开发这个工具。
+  <br/>例如，对于Blazor WASM程序[[DCWriterApp](https://github.com/dcsoft-yyf/DCWriterApp)],原始程序文件有`61`个共`36.5MB`，打包后生成单个JS文件大小仅为`15.2MB`，压缩比为41%。而且使用这个单个JS文件部署后，提高程序加载速度，还避免了跨域资源调用问题。
 
 ## 带来的好处
 
