@@ -72,6 +72,7 @@
             width: 16px;
             height: 16px;
         }
+
         #removeImportMergeJs {
             margin-right: 8px;
             width: 16px;
@@ -204,8 +205,8 @@
 <body>
     <h1>Blazor WASM 程序打包器</h1>
     <div class="intro">
-        <p>发布时间 2025年10月30日 。网站:<a href="https://github.com/dcsoft-yyf/BlazorWASMPackager">https://github.com/dcsoft-yyf/BlazorWASMPackager</a></p>
-        <p>此工具用于打包 Blazor WebAssembly 应用的核心资源文件到一个JS文件中，支持Blazor WASM 7.0/8.0/9.0。请将本HTML文件放置在Blazor Wassembly程序发布后的根目录下（_framework的父目录中），点击下方按钮后，程序将：</p>
+        <p>发布时间 2025年11月12日 。网站:<a href="https://github.com/dcsoft-yyf/BlazorWASMPackager">https://github.com/dcsoft-yyf/BlazorWASMPackager</a></p>
+        <p>此工具用于打包 Blazor WebAssembly 应用的核心资源文件到一个JS文件中，支持Blazor WASM 7.0/8.0/9.0/10。请将本HTML文件放置在Blazor Wassembly程序发布后的根目录下（_framework的父目录中），点击下方按钮后，程序将：</p>
         <ol>
             <li>解析当前应用的 <code>_framework/blazor.boot.json</code> 配置文件（并包含到打包结果中）</li>
             <li>强制打包 boot.json 中列出的所有资源文件（包括JS文件）</li>
@@ -214,11 +215,33 @@
             <li>生成包含所有资源的 JavaScript 文件并提供下载</li>
         </ol>
     </div>
-
+    <!-- 输出文件名输入区域 -->
+    <div class="output-filename-container">
+        <label for="outputFileNameInput">针对.NET10，输入HTML页面"importmap"的JSON字符串,如果这个文本框有内容，则当做.NET10来处理。:</label>
+        <textarea id="txtImportMap" style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; resize: vertical;" placeholder="例如:{
+  'imports': {
+    './_framework/blazor.webassembly.js': './_framework/blazor.webassembly.66stpp682q.js',
+    './_framework/dotnet.js': './_framework/dotnet.kh7lludhek.js',
+    './_framework/dotnet.native.js': './_framework/dotnet.native.wocz5o37d9.js',
+    './_framework/dotnet.runtime.js': './_framework/dotnet.runtime.o0qy896u8v.js'
+  },
+  'scopes': {},
+  'integrity': {
+    './_framework/blazor.webassembly.66stpp682q.js': 'sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=',
+    './_framework/blazor.webassembly.js': 'sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=',
+    './_framework/dotnet.js': 'sha256-KJZsY1OP4fdi6r1tGxvWbWa3n8NAv8S7FVSLeTyYkTE=',
+    './_framework/dotnet.kh7lludhek.js': 'sha256-KJZsY1OP4fdi6r1tGxvWbWa3n8NAv8S7FVSLeTyYkTE=',
+    './_framework/dotnet.native.js': 'sha256-AKC6Ab2ZgPtWYjruHPQ69wz9lNthlLL+oVjs7+M9aOg=',
+    './_framework/dotnet.native.wocz5o37d9.js': 'sha256-AKC6Ab2ZgPtWYjruHPQ69wz9lNthlLL+oVjs7+M9aOg=',
+    './_framework/dotnet.runtime.js': 'sha256-yJvgPPUUvavYVmu9VD/fYtMcoEnLVaB0Cr7JAE29btw=',
+    './_framework/dotnet.runtime.o0qy896u8v.js': 'sha256-yJvgPPUUvavYVmu9VD/fYtMcoEnLVaB0Cr7JAE29btw='
+  }
+}"></textarea>
+    </div>
     <!-- 输出文件名输入区域 -->
     <div class="output-filename-container">
         <label for="outputFileNameInput">最终生成的JS文件名：</label>
-        <input type="text" id="outputFileNameInput"  placeholder="例如：MyApp.published.js">
+        <input type="text" id="outputFileNameInput" placeholder="例如：MyApp.published.js">
         <div class="filename-hint">提示：留空将使用默认文件名（entryAssembly值 + .published.js）。请确保包含.js扩展名。</div>
     </div>
 
@@ -230,30 +253,30 @@ custom-script-1.js
 scripts/custom-script-2.js">
 </textarea>
         <!--
-    DCTools20221228.js
-    PageContentDrawer.js
-    WriterControl_API.js
-    WriterControl_CalculateControl.js
-    WriterControl_DateTimeControl.js
-    WriterControl_Dialog.js
-    WriterControl_DialogStaticResources.js
-    WriterControl_DOMPackage.js
-    WriterControl_DrawD3.js
-    WriterControl_DrawFu.js
-    WriterControl_EF.js
-    WriterControl_Event.js
-    WriterControl_FontList.js
-    WriterControl_IO.js
-    WriterControl_KnowledgeBase.js
-    WriterControl_ListBoxControl.js
-    WriterControl_Paint.js
-    WriterControl_Print.js
-    WriterControl_QueryListTableControl.js
-    WriterControl_Rule.js
-    WriterControl_Task.js
-    WriterControl_ToolBar.js
-    WriterControl_UI.js
-    WriterControl_Main.js -->
+        DCTools20221228.js
+        PageContentDrawer.js
+        WriterControl_API.js
+        WriterControl_CalculateControl.js
+        WriterControl_DateTimeControl.js
+        WriterControl_Dialog.js
+        WriterControl_DialogStaticResources.js
+        WriterControl_DOMPackage.js
+        WriterControl_DrawD3.js
+        WriterControl_DrawFu.js
+        WriterControl_EF.js
+        WriterControl_Event.js
+        WriterControl_FontList.js
+        WriterControl_IO.js
+        WriterControl_KnowledgeBase.js
+        WriterControl_ListBoxControl.js
+        WriterControl_Paint.js
+        WriterControl_Print.js
+        WriterControl_QueryListTableControl.js
+        WriterControl_Rule.js
+        WriterControl_Task.js
+        WriterControl_ToolBar.js
+        WriterControl_UI.js
+        WriterControl_Main.js -->
         <div class="minify-option">
             <input type="checkbox" id="minifyMergeJs">
             <label for="minifyMergeJs">合并自定义脚本时删除注释和无意义空格（处理模板字符串和正则表达式）</label>
@@ -646,15 +669,15 @@ scripts/custom-script-2.js">
                 logDebugMessage(`自定义脚本已精简，原始大小: ${formatBytes(originalMergedSize)}, 精简后: ${formatBytes(new TextEncoder().encode(finalContent).length)}`);
             }
 
-             /*
-                const blob3 = new Blob([finalContent], { type: 'application/javascript' });
-                blobUrl3 = URL.createObjectURL(blob3);
-                const a = document.createElement('a');
-                a.href = blobUrl3;
-                a.download = "merge.js";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);*/
+            /*
+               const blob3 = new Blob([finalContent], { type: 'application/javascript' });
+               blobUrl3 = URL.createObjectURL(blob3);
+               const a = document.createElement('a');
+               a.href = blobUrl3;
+               a.download = "merge.js";
+               document.body.appendChild(a);
+               a.click();
+               document.body.removeChild(a);*/
 
 
             // 压缩合并后的内容
@@ -705,23 +728,6 @@ scripts/custom-script-2.js">
                 originalTotalBytes = customJsResult.originalTotalBytes;
                 const customFileEntries = customJsResult.fileEntries;
 
-                // 2. 加载并处理 blazor.boot.json
-                logDebugMessage('加载 blazor.boot.json 配置文件');
-                updateProgress(5, '加载配置文件...');
-
-                const bootJsonResponse = await fetch('_framework/blazor.boot.json');
-                if (!bootJsonResponse.ok) {
-                    throw new Error(`无法加载 blazor.boot.json (${bootJsonResponse.statusText})`);
-                }
-
-                // 获取blazor.boot.json的原始内容和大小
-                const bootJsonText = await bootJsonResponse.text();
-                const bootJsonBytes = new TextEncoder().encode(bootJsonText).length;
-                originalTotalBytes += bootJsonBytes;
-                logDebugMessage(`blazor.boot.json 加载成功 (${formatBytes(bootJsonBytes)})`);
-
-                const bootJson = JSON.parse(bootJsonText);
-
                 function formatNowDate() {
                     var date = new Date();
                     const pad = (num) => num.toString().padStart(2, '0');
@@ -735,6 +741,101 @@ scripts/custom-script-2.js">
 
                     return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
                 }
+                var intRuntimeVersion = 7;
+                var logicFileNameMaps = null;
+                var bootJson = null;
+                // 3. 收集需要处理的文件列表（boot.json中列出的所有文件，强制打包）
+                var bootJsonText = null;
+                var filesToProcess = ["blazor.webassembly.js", "dotnet.js"];
+                const strNET10ImportMap = document.getElementById("txtImportMap").value.trim();
+                if (strNET10ImportMap != null && strNET10ImportMap.length > 0) {
+                    // 针对.NET10的importmap处理
+                    intRuntimeVersion = 10;
+                    logicFileNameMaps = {};
+                    filesToProcess = [];
+                    var net10Cfg = JSON.parse(strNET10ImportMap);
+                    if (net10Cfg != null && net10Cfg.imports != null) {
+                        for (var key in net10Cfg.imports) {
+                            var parts55 = key.split('/');
+                            var logicFileName = parts55[parts55.length - 1];
+                            var val = net10Cfg.imports[key];
+                            if (key.endsWith(".js")) {
+                                var arrParts = val.split("/");
+                                var fileNameOnly = arrParts[arrParts.length - 1];
+                                filesToProcess.push(fileNameOnly);
+                                logicFileNameMaps[fileNameOnly] = logicFileName;
+                            }
+                            if (key.endsWith("dotnet.js")) {
+                                // 从 dotnet.js 中提取 boot.json
+                                const jsContent = await fetch(net10Cfg.imports[key]).then(res => res.text());
+                                const index567 = jsContent.indexOf("/*json-start*/");
+                                if (index567 > 0) {
+                                    const index890 = jsContent.indexOf("/*json-end*/", index567);
+                                    if (index890 > index567) {
+                                        const strBootJson = jsContent.substring(index567 + 14, index890).trim();
+                                        bootJson = JSON.parse(strBootJson);
+                                        const bootJsonBytes = new TextEncoder().encode(strBootJson).length;
+                                        originalTotalBytes += bootJsonBytes;
+                                        logDebugMessage(`blazor.boot.json 加载成功 (${formatBytes(bootJsonBytes)})`);
+                                        for (var key23 in bootJson.resources) {
+                                            var fileItems = bootJson.resources[key23];
+                                            if (fileItems instanceof Array) {
+                                                for (var fileItem475 of fileItems) {
+                                                    var fileName345 = fileItem475.name;
+                                                    if (filesToProcess.indexOf(fileName345) < 0) {
+                                                        filesToProcess.push(fileName345);
+                                                    }
+                                                    //if (fileItem475.virtualPath && key23 != "coreAssembly") {
+                                                    //    logicFileNameMaps[fileName345] = fileItem475.virtualPath;
+                                                    //}
+                                                }
+                                            }//if
+                                        }//for
+                                    }//if
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    // 2. 加载并处理 blazor.boot.json
+                    filesToProcess = ["blazor.webassembly.js", "dotnet.js"];
+                    logDebugMessage('加载 blazor.boot.json 配置文件');
+                    updateProgress(5, '加载配置文件...');
+
+                    const bootJsonResponse = await fetch('_framework/blazor.boot.json');
+                    if (!bootJsonResponse.ok) {
+                        throw new Error(`无法加载 blazor.boot.json (${bootJsonResponse.statusText})`);
+                    }
+
+                    // 获取blazor.boot.json的原始内容和大小
+                    bootJsonText = await bootJsonResponse.text();
+                    const bootJsonBytes = new TextEncoder().encode(bootJsonText).length;
+                    originalTotalBytes += bootJsonBytes;
+                    logDebugMessage(`blazor.boot.json 加载成功 (${formatBytes(bootJsonBytes)})`);
+                    bootJson = JSON.parse(bootJsonText);
+
+                    const resourceTypes = ['runtime', 'assembly',
+                        'runtimeAssets', 'pdb', 'jsModuleNative',
+                        'jsModuleRuntime', 'wasmNative',
+                        'icu', 'coreAssembly', 'fingerprinting'];
+                    resourceTypes.forEach(type => {
+                        if (bootJson.resources && bootJson.resources[type]) {
+                            const items = bootJson.resources[type];
+                            Object.keys(items).forEach(filename => {
+                                if (filesToProcess.indexOf(filename) < 0) {
+                                    filesToProcess.push(filename);
+                                }
+                            });
+                        }
+                    });
+                    if (bootJson.appsettings) {
+                        for (var item4 of bootJson.appsettings) {
+                            filesToProcess.push(item4);
+                        }
+                    }
+                }
+
 
                 // 确定输出文件名：用户输入优先
                 const userFileName = outputFileNameInput.value.trim();
@@ -743,36 +844,15 @@ scripts/custom-script-2.js">
                     logDebugMessage(`使用用户指定文件名: ${outputFileName}`);
                 } else if (bootJson.entryAssembly) {
                     var dtm = new Date();
-                    outputFileName = bootJson.entryAssembly + '.' + formatNowDate() + ".published.js";
+                    outputFileName = bootJson.entryAssembly + '-' + formatNowDate() + ".published.js";
                     logDebugMessage(`使用默认文件名: ${outputFileName}`);
                 } else if (bootJson.mainAssemblyName) {
-                    outputFileName = bootJson.mainAssemblyName + '.' + formatNowDate() + ".published.js";
+                    outputFileName = bootJson.mainAssemblyName + '-' + formatNowDate() + ".published.js";
                     logDebugMessage(`使用默认文件名: ${outputFileName}`);
                 }
 
                 updateProgress(10, '解析配置文件完成');
 
-                // 3. 收集需要处理的文件列表（boot.json中列出的所有文件，强制打包）
-                const filesToProcess = ["blazor.webassembly.js","dotnet.js"];
-                const resourceTypes = ['runtime', 'assembly',
-                    'runtimeAssets', 'pdb', 'jsModuleNative',
-                    'jsModuleRuntime', 'wasmNative',
-                    'icu', 'coreAssembly', 'fingerprinting'];
-                resourceTypes.forEach(type => {
-                    if (bootJson.resources && bootJson.resources[type]) {
-                        const items = bootJson.resources[type];
-                        Object.keys(items).forEach(filename => {
-                            if (filesToProcess.indexOf(filename) < 0) {
-                                filesToProcess.push(filename);
-                            }
-                        });
-                    }
-                });
-                if (bootJson.appsettings) {
-                    for(var item4 of bootJson.appsettings) {
-                        filesToProcess.push(item4);
-                    }
-                }
 
                 logDebugMessage(`发现 ${filesToProcess.length} 个需要打包的资源文件`);
                 updateProgress(15, '准备处理文件...');
@@ -783,20 +863,19 @@ scripts/custom-script-2.js">
 
                 // 4. 处理所有文件（包括blazor.boot.json和自定义合并文件）
                 const fileEntries = [...customFileEntries];
-
-                // 添加blazor.boot.json
-                const bootJsonCompressed = await gzipCompress(new TextEncoder().encode(bootJsonText));
-                const bootJsonBase64 = uint8ArrayToBase64(bootJsonCompressed);
-                fileEntries.push({
-                    filename: 'blazor.boot.json',
-                    content: bootJsonBase64
-                });
-                logDebugMessage('blazor.boot.json 已处理');
-
+                if (bootJsonText != null) {
+                    // 添加blazor.boot.json
+                    const bootJsonCompressed = await gzipCompress(new TextEncoder().encode(bootJsonText));
+                    const bootJsonBase64 = uint8ArrayToBase64(bootJsonCompressed);
+                    fileEntries.push({
+                        filename: 'blazor.boot.json',
+                        content: bootJsonBase64
+                    });
+                    logDebugMessage('blazor.boot.json 已处理');
+                }
                 let processedCount = 0;
                 const totalFiles = filesToProcess.length;
                 const progressPerFile = totalFiles > 0 ? 75 / totalFiles : 0;
-                var intRuntimeVersion = 7;
                 for (const filename of filesToProcess) {
                     try {
                         updateProgress(15 + (processedCount * progressPerFile),
@@ -813,7 +892,7 @@ scripts/custom-script-2.js">
                         if (filename.startsWith("dotnet.runtime.")
                             && uint8Array != null
                             && uint8Array.length > 10000) {
-                            var strHeader44 = new TextDecoder().decode(uint8Array.slice(0,1000));
+                            var strHeader44 = new TextDecoder().decode(uint8Array.slice(0, 1000));
                             if (strHeader44.indexOf("e=\"9.") >= 0) {
                                 intRuntimeVersion = 9;
                             }
@@ -861,18 +940,17 @@ scripts/custom-script-2.js">
         return;
     }
     window.__DCWriter5Started = true;
-    var allFileContents = {
-                `;
+    var allFileContents = {`;
                 fileEntries.forEach((entry, index) => {
                     const isLastEntry = index === fileEntries.length - 1;
-                    const key = escapeJsKey(entry.filename);
+                    var key = escapeJsKey(entry.filename);
                     const escapedContent = entry.content.replace(/`/g, '\\`');
                     jsContent += `  ${key}: \`${escapedContent}\`${isLastEntry ? '' : ','}\n`;
                 });
 
                 jsContent += '};';
+                jsContent += "\r\n /* " + fileEntries.length + " files , total:" + formatBytes(originalTotalBytes) + " */";
                 jsContent += `
-    // 获得资源基础路径
     var bolDebugMode = false;
     function ConverToBoolean(strValue, bolDefaultValue) {
         if (strValue == null || strValue.length == 0) return bolDefaultValue;
@@ -953,7 +1031,16 @@ scripts/custom-script-2.js">
     allFileContents = null;
     var myOriginalURL = null;
     `;
-                if (intRuntimeVersion == 9 || intRuntimeVersion == 8) {
+                if (intRuntimeVersion == 10 && logicFileNameMaps != null) {
+                    jsContent += "\r\n    // fix for .NET10.0";
+                    for (var key in logicFileNameMaps) {
+                        jsContent += "\r\n    mapBase64BlobUrl[\"" + logicFileNameMaps[key] + "\"] = mapBase64BlobUrl[\"" + key + "\"];";
+                        if (logicFileNameMaps[key] == "blazor.webassembly.js") {
+                            jsContent += "\r\n    jsScript.src = mapBase64BlobUrl[\"" + key + "\"];";
+                        }
+                    }
+                }
+                if (intRuntimeVersion == 9 || intRuntimeVersion == 8 || intRuntimeVersion == 10) {
                     jsContent += `
     myOriginalURL = globalThis.URL || window.URL;
     var newURL = function(strUrl , strBase){
@@ -1050,7 +1137,7 @@ scripts/custom-script-2.js">
     };
     document.head.appendChild(jsScript);
 })();
-                `;
+                                                                                                        `;
                 // 计算JS文件大小（UTF-8编码）
                 const encoder = new TextEncoder();
                 const jsUint8Array = encoder.encode(jsContent);
