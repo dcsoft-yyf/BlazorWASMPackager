@@ -1,7 +1,21 @@
 # Blazor WASM Packager
+
+## Update log
+
+- 2025-11-12 : Support .NET10
+
 ## Introduction  [[中文版]](#blazor-wasm-程序打包器)
  Blazor WASM Packager can package all Blazor WebAssembly program files, including `js`,`wasm`,`dll`,`json`,`dat` and other files, into a single JS file after GZIP compression. It greatly simplifies the deployment process, optimizes application loading performance, and enables cross-origin calls for Blazor WASM.
 <br/> For example, for the Blazor WASM application [[DCWriterApp](https://github.com/dcsoft-yyf/DCWriterApp)], there are contains `61` files totaling `36.5MB`. After packaging, a single JS file is generated with a size of only `15.2MB`, achieving a compression ratio of 41%. Additionally, deploying with this single JS file improves the application's loading speed and avoids cross-origin resource call issues.
+
+| Inconveniences of standard Blazor WASM | After packaging |
+|----------------------------------------|-----------------|
+| 61 files, totaling 36.5MB, including various types such as dll, js, wasm, dat, etc. | 1 JS file, 15MB |
+| Does not support cross-domain calls | Supports cross-domain calls |
+| Does not support "file://" local file system calls | Supported |
+| Does not support Election front-end file packaging technology | Supported |
+| Inconvenient for customer deployment, version updates and rollbacks | Convenient |
+| Contains DLL files (sensitive file type), which may conflict with customer security policies | None |
 
 ## Demo for Blazor WASM without `_framework` folder
 
@@ -215,6 +229,15 @@ This software is copyrighted by Nanjing Duchang Information Technology Co., Ltd.
 
   Blazor WASM 程序打包器能将 Blazor WebAssembly 所有的程序文件，包括`js`,`wasm`,`dll`,`json`等文件经GZIP压缩打包成单个JS文件，大幅简化部署流程并优化应用加载性能,而且能让Blazor WASM能跨域调用。
   <br/>例如，对于Blazor WASM程序[[DCWriterApp](https://github.com/dcsoft-yyf/DCWriterApp)],原始程序文件有`61`个共`36.5MB`，打包后生成单个JS文件大小仅为`15.2MB`，压缩比为41%。而且使用这个单个JS文件部署后，提高程序加载速度，还避免了跨域资源调用问题。
+
+  | 标准Blazor WASM的不便之处 | 打包后 |
+|----------------------|--------|
+| 61个文件，共36.5MB，有dll、js、wasm、dat等多种类型 | 1个JS文件，15MB |
+| 不可跨域调用 | 支持跨域调用 |
+| 不支持"file://"本地文件系统调用 | 支持 |
+| 不支持Election前端文件打包技术 | 支持 |
+| 客户部署、版本更新和回滚不方便 | 方便 |
+| 存在DLL文件，敏感文件类型，容易和客户安全策略冲突 | 无 |
 
 ## 带来的好处
 
