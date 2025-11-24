@@ -266,7 +266,7 @@
             针对.NET10，输入HTML页面"importmap"的JSON字符串,如果这个文本框有内容，则当做.NET10来处理。:
             <br /><span class="en-text">For .NET 10: paste the HTML page "importmap" JSON string here. If this field is non-empty it will be treated as .NET 10.</span>
         </label>
-        <textarea id="txtImportMap" style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; resize: vertical;" placeholder="etc:{
+        <textarea id="txtImportMap" style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; resize: vertical;" placeholder="For example:{
   'imports': {
     './_framework/blazor.webassembly.js': './_framework/blazor.webassembly.66stpp682q.js',
     './_framework/dotnet.js': './_framework/dotnet.kh7lludhek.js',
@@ -291,7 +291,7 @@
         <label for="outputFileNameInput">
             最终生成的JS文件名 <span class="en-text">(Final generated JS filename)</span>:
         </label>
-        <input type="text" id="outputFileNameInput" placeholder="例如：MyApp.published.js">
+        <input type="text" id="outputFileNameInput" placeholder="For example: MyApp.published.js">
         <div class="filename-hint">
             提示：留空将使用默认文件名（entryAssembly值 + .published.js）。请确保包含.js扩展名。
             <br /><span class="en-text">Tip: Leave empty to use the default filename (entryAssembly + .published.js). Ensure the .js extension is included.</span>
@@ -304,7 +304,7 @@
             需要合并的自定义JS文件（每行一个，相对于_framework目录）：
             <br /><span class="en-text">Custom JS files to merge (one per line, relative to _framework):</span>
         </label>
-        <textarea id="mergeFilesInput" placeholder="etc：
+        <textarea id="mergeFilesInput" placeholder="For example:
 custom-script-1.js
 scripts/custom-script-2.js">
 </textarea>
@@ -412,8 +412,10 @@ scripts/custom-script-2.js">
     </div>
 
     <div class="copyright">
-        南京都昌信息科技有限公司版权所有
-        <br /><span class="en-text">Nanjing Duchang Information Technology Co., Ltd. All rights reserved.</span>
+        <a href="https://www.dcwriter.cn/" target="_blank">
+            南京都昌信息科技有限公司版权所有 , DCSoft©2025 All rights reserved.</span>
+        </a>
+        <br />License by: Apache-2.0 license.
     </div>
 
     <script>
