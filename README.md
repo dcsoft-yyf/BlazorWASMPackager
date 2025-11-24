@@ -1,7 +1,7 @@
 # Blazor WASM Packager
 
 ## Update log
-
+- 2025-11-24 : Update to a single html file with chinese and English version.
 - 2025-11-12 : Support .NET10
 
 ## Introduction  [[中文版]](#blazor-wasm-程序打包器)
@@ -10,7 +10,7 @@
 
 | Inconveniences of standard Blazor WASM | After packaging |
 |----------------------------------------|-----------------|
-| 61 files, totaling 36.5MB, including various types such as dll, js, wasm, dat, etc. | 1 JS file, 15MB |
+| 61 files, totaling 36.5MB, including various types such as dll, js, wasm, dat, etc. | Single JS file, 15MB |
 | Does not support cross-domain calls | Supports cross-domain calls |
 | Does not support "file://" local file system calls | Supported |
 | Does not support Election front-end file packaging technology | Supported |
@@ -28,7 +28,7 @@
 
 ## Benefits
 1. **Ease of Use**
-   - This software contains only one file: `BlazorWASMPackager.html`. That's right, just one HTML file!`BlazorWASMPackager-en.html` is English version.
+   - This software contains only one file: `BlazorWASMPackager.html`. That's right, just one HTML file!
    - This HTML file is directly placed in the root folder of the published Blazor WebAssembly program (usually the `wwwroot` folder) and can be used by opening it with a mainstream browser, without relying on any third-party software.
    - Provides visual progress feedback and detailed processing logs
    - Supports custom output file names and script merging rules
@@ -242,7 +242,7 @@ This software is copyrighted by Nanjing Duchang Information Technology Co., Ltd.
 ## 带来的好处
 
 1. **使用简单**
-   - 本软件只有一个`BlazorWASMPackager.html`文件。没错！就一个HTML文件。`BlazorWASMPackager-en.html`是其英文版本。
+   - 本软件只有一个`BlazorWASMPackager.html`文件。没错！就一个HTML文件。
    - 这个HTML文件直接放在Blazor WebAssembly程序发布后的根目录下（一般为`wwwroot`目录下），用主流浏览器打开即可使用，不依赖任何第三方软件。
    - 提供可视化进度反馈和详细处理日志
    - 支持自定义输出文件名和脚本合并规则
